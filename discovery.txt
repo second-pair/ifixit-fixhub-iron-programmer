@@ -1,0 +1,225 @@
+-=-  Serial Settings  -=-
+
+`picocom-quick` works and communicates, but echoes back your characters as you type them.  Use `picocom --imap lfcrlf -b 115200`.
+
+Baud:  115200
+Data Bits:  8
+Stop Bits:  0
+Parity:  None
+
+I was able to sue the WebSerial interface in Firefox by installing the "WebSerial for Firefox" addon and the supporting programme:
+ -  https://addons.mozilla.org/en-US/firefox/addon/webserial-for-firefox
+ -  https://github.com/kuba2k2/firefox-webserial
+On Linux, I haven't been able to create a virtual Serial Port (so that I can sniff it) and have the WebSerial interface provide it as an option to connect to.
+I was able to get 'picocom' to hijack the WebSerial's connection on one occasion, which yielded a bunch of gibberish with some settings names thrown in there.  I managed to figure some of them out and have noted them in the "Settings Set/Get" section.
+
+
+
+-=-  Device Settings  -=-
+
+https://www.ifixit.com/Wiki/FixHub_Settings
+
+
+-=>  Portable Power Station Functionality (Not the Iron):
+
+Language:  English, German, French, Spanish, italian
+Power-Off Timer:  1-30m
+Timer Enable:  Enable/Disable ^
+Max Charge:  De-rate maximum capcity to prolong the battery:  60-100%
+Battery Health:  Maximum battery as a percentage of original maximum capacity.
+Error Log:  Log of Errors
+
+-=>  Web Interface & Station Functionality:
+
+Units:  Farenheit or Celsius
+Max Temp (Setpoint Temp when not powered by the Station):  200-420C or 395-790F
+ -  Idle Mode
+Idle Temp:  50-200C or 125-390F, in 5-degree steps
+Idle Timer:  1-60s
+Idle Enable:  Enable/Disable ^ - recommended Enabled if using the Soldering Iron Cap.
+ -  Sleep Mode:
+Sleep Timer:  1-60s
+Sleep Enable:  Enable/Disable ^ - recommend Enabled if using the Soldering Iron Cap.
+Temp Correction:  Calibrate the tip temperature - -20-+20C or -36-+36F.
+State:  Sleep, Idle, Active
+
+
+
+-=-  Serial Commands  -=-
+
+-=>  Help
+
+help:
+Available commands:
+  adc
+  bootloader
+  comms
+  gpio
+  heater
+  help
+  i2c
+  log
+  logging
+  mcu_sn
+  mxc4005
+  nvs
+  ob
+  otp
+  pubsub
+  reset
+  settings
+  thermistor
+  thermocouple
+  uptime
+  usbpd
+  version
+
+
+-=>  Investigating Each Command In Turn
+
+adc:
+read <device> -> [Find the device]
+
+bootloader:
+reboot -> Reboots the device.
+
+comms:
+tx-test -> No output.
+
+gpio:
+write <name - net name> <0|1>
+read <name - net name> -> [Find devices]
+
+heater:
+details:
+	setpoint temp: 50 C
+	active temp: 320 C
+	idle temp: 100 C
+	current thermocouple temp: 25.43 C
+	current raw temp: 19.58 C
+	current filtered temp: 19.58 C
+	delta_C: 0.00 C
+	delta_C_integrated: 0.00 C
+	delta_C_derivative: 0.00 C
+	tip power mW: 2250
+	pid output desired W: 0
+	pwm duty cycle: 0
+	switch on?: No
+	tip installed?: Yes
+	state: Off
+	buck state: High power
+	control loop P: 1.00
+	control loop I: 1.00
+	control loop D: 0.10
+	integral windup max: 40.00
+	control loop period: 300000 uS
+controlloop -> Starts a log-loop that prints a CSV-separated table with core-loop details - Ctrl+C to stop:
+	P: 1.00; I: 1.00; D: 0.10; Integral windup max: 40.00
+	ms elapsed, raw temp (C), TC temp (C), duty cycle, buck state, pwm duty cycle, setpoint temp (C)
+	'106, 19.63, 25.50, 0, 0, 0, 50
+	'409, 19.63, 25.50, 0, 0, 0, 50
+	'712, 19.63, 25.50, 0, 0, 0, 50
+tip_installed_uptime -> Yields a large number straight after re-inserting the tip, or a number like '306' otherwise.
+faultmask -> 0x0 if all is ok.
+
+help -> See above.
+
+i2c:
+scan <device> -> [Find devices.]
+
+log <sbcommand> - no help provided:
+enable <severity> -> [Find severities - tried numbers, 'info|error']
+disable -> "Backend not active."  'logging enable' below prevents this message and 'logging disable' brings it back.
+
+logging - the "Logging Backend":
+enable
+disable
+
+mcu_sn -> 12-Byte Hex serial number formatted '00112233-44556677-8899AABB'.  The first two fields are the USB Hardware ID, which is 8-bytes long.
+
+mxc4005 - I think this is the accelerometer:
+magnitude -> '35,1008,-387,1080'
+I'll try to fast-loop log this and wave it around to determine which field is which.
+
+nvs:
+readz -> '50'
+writez <integer> -> nothing, but you can then read this back using 'readz'.
+
+ob - Option Bytes:
+set -> First time, it closed the Serial port :O  Second time "Proper option bytes already set" even with passing a number.
+
+otp - one-time programming? - no help provided:
+read ->
+	version: 1
+	serial_number: 3003825
+	factory_unix_epoch_timestamp_s: 1724381091
+	thermocouple_slope_calibration: 1.00
+	thermocouple_offset_calibration: 0
+write -> "Required SN length is 7, got 6 for �� �/"
+write 1234567 -> "Timestamp is Unix epoch UTC in seconds, got 0"
+write otp write 1234567 1700000000 1.00 0 -> Usage: <serial_number> <unix_epoch_timestamp_s> <thermocouple_slope_numerator> <thermocouple_slope_denominator> <thermocouple_offset>
+write otp write 1234567 1700000000 2 1 0 -> "OTP is already written, cannot write!"
+
+pubsub:
+enable <device> -> [Find devices.]
+disable <device> -> [Find devices.]
+
+reset -> Closed the Serial port as expected.
+
+settings - I don't have a list of valid commands here.  I'm assuming I could sniff the comms from the web interface to figure this out.
+get
+set
+settings get maxtemp -> 420
+
+thermistor - no help provided - I couldn't get it to respond to any sub-commands I threw at it.
+
+thermocouple - no help provided - I couldn't get it to respond to any sub-commands I threw at it.
+
+uptime -> uptime in ms.
+
+usbpd:
+status ->
+Port 1:
+         LoadSwitch: Off
+           Attached: Y
+               Port: UFP
+Orientation Swapped: N
+  Explicit Contract: N
+              Power: SNK
+      Partner Known: N
+     Discovery Done: Y
+     iFixit AltMode: N
+       Force Detach: N
+vbus -> Port1:  5215mV @    0mA
+
+version:
+Zephyr Kernel Version: 3.6.0
+    Zephyr Kernel Git: v3.6.0-113-ga0c8a437c185
+              App Git: 2f79b7d2
+         Compile Time: 2024-09-16T22:15:36
+           Compile OS: Linux-6.5.0-1025-azure
+             Platform: ifixit_iron (stm32g491xx)
+       Compile Author: runner
+             Compiler: GCC 12.2.0
+           Build Type: release
+
+
+-=>  Settings Set/Get
+
+maxtemp:  200-420C or 395-790F
+activetemp:  (200)
+idletimerenable:  0|1 -> Enabled|Disabled
+idletimer:  1-60s
+idletemp:  50-200C or 125-390F
+sleeptimerenable:  0|1 -> Enabled|Disabled
+sleeptimer:  1-60s
+units:  C|F
+tempcorrection:  -20-+20C or -36-+36F.
+
+
+-=>  Settings To Find
+
+PID Kp, Ki, Kd, Max i
+Control loop period uS
+Reset
+Firmware Update

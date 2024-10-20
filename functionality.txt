@@ -1,0 +1,36 @@
+Based off what the Web Interface provides and what's additionally available from the Serial interface, here's what I'm intending on implementing in the first instance:
+
+
+-=>  Base Functionality
+Serial Port selector, maybe implementing memory of the last device you connected to.
+
+-=>  Core Readouts
+Switch Status [heater details]
+Curr Temp, Curr Power / Duty Cycle % [heater details / heater controlloop]
+Status/State [heater details]
+
+-=>  Secondary Readouts
+Tip Installed [heater details]
+Serial Number [otp read], MCU S/N [mcu_sn], Version [otp read, version]
+Uptime [uptime]
+Fault Mask [heater faultmask]
+Accelerometer [mxc4005 magnitude]
+
+-=>  Setpoints
+SP Temp [settings activetemp]
+SP Min Temp [seems to be fixed at 200], SP Max Temp [settings maxtemp]
+
+-=>  Configuration
+Celsius/Farenheit [settings units]
+Idle Enable [settings idletimerenable], Idle Timer [settings idletimer], Idle Temp [settings idletemp]
+Sleep Enable [settings sleeptimerenable], Sleep Timer [settings sleeptimer]
+Temperature Correction [settings tempcorrection]
+Reboot [bootloader reboot / reset]
+Reset
+
+-=>  Advanced
+PID Kp, Ki, Kd, Max i
+Control loop period uS
+
+
+In due course, I might be able to offer firmware upgrade capabilities, but no promises for now!

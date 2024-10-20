@@ -70,6 +70,9 @@
 
 //  Local Global Variables
 static volatile uint8_t gui_keepRunning = 1;
+static GtkWidget* label_version_curr = NULL;
+static GtkWidget* label_spTemp_curr = NULL;
+static GtkWidget* label_spTemp_new = NULL;
 
 //  Truly Global Variables
 
@@ -80,6 +83,9 @@ GtkWidget* gui_layout_create (void);
 //  Prototype Callbacks
 void cb_app_main_activate (GtkApplication* theApp, gpointer data);
 void cb_signal_terminate (int sigType);
+static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data);
 
 //  *--</Preparations>--*  //
 
@@ -126,8 +132,33 @@ GtkWidget* gui_layout_create (void)
 	gtk_widget_set_halign (box_main, GTK_ALIGN_CENTER);
 	gtk_widget_set_valign (box_main, GTK_ALIGN_CENTER);
 
-	//  Add a test child widget.
-	gtk_box_append (GTK_BOX (box_main), gtk_label_new ("Hello, world!\n"));
+	//  Populate with a title and a button to connect to Serial.
+	gtk_box_append (GTK_BOX (box_main), gtk_label_new (TEXT_TL_TITLE));
+	gtk_box_append (GTK_BOX (box_main), gtk_label_new (NULL));
+	GtkWidget* label_ser_port = gtk_label_new ("/dev/ttyACM0");
+	gtk_box_append (GTK_BOX (box_main), label_ser_port);
+	GtkWidget* btn_ser_connect = gtk_button_new_with_label ("Open Port");
+	g_signal_connect (btn_ser_connect, "clicked", G_CALLBACK (cb_btn_ser_connect_clicked), NULL);
+	gtk_box_append (GTK_BOX (box_main), btn_ser_connect);
+	gtk_box_append (GTK_BOX (box_main), gtk_label_new (NULL));
+
+	//  Create some initial core parameters.
+	GtkWidget* label_version_title = gtk_label_new ("Version:");
+	gtk_box_append (GTK_BOX (box_main), label_version_title);
+	label_version_curr = gtk_label_new ("<version>");
+	gtk_box_append (GTK_BOX (box_main), label_version_curr);
+	GtkWidget* btn_version_get = gtk_button_new_with_label ("Get");
+	g_signal_connect (btn_version_get, "clicked", G_CALLBACK (cb_btn_version_get_clicked), NULL);
+	gtk_box_append (GTK_BOX (box_main), btn_version_get);
+	GtkWidget* label_spTemp_title = gtk_label_new ("Temp Setpoint:");
+	gtk_box_append (GTK_BOX (box_main), label_spTemp_title);
+	label_spTemp_curr = gtk_label_new ("<spTemp>");
+	gtk_box_append (GTK_BOX (box_main), label_spTemp_curr);
+	label_spTemp_new = gtk_label_new ("<newTemp>");
+	gtk_box_append (GTK_BOX (box_main), label_spTemp_new);
+	GtkWidget* btn_spTemp_get = gtk_button_new_with_label ("Get");
+	g_signal_connect (btn_spTemp_get, "clicked", G_CALLBACK (cb_btn_spTemp_get_clicked), NULL);
+	gtk_box_append (GTK_BOX (box_main), btn_spTemp_get);
 
 	return box_main;
 }
@@ -161,6 +192,19 @@ void cb_signal_terminate (int sigType)
 {
 	gui_keepRunning = 0;
 	exit (0);
+}
+
+static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
+{
+	_LOG (0, "Clicked.\n");
+}
+static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data)
+{
+	_LOG (0, "Clicked.\n");
+}
+static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data)
+{
+	_LOG (0, "Clicked.\n");
 }
 
 //  *--</Callbacks>--*  //

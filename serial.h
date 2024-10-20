@@ -31,11 +31,17 @@
 //  Truly Global Variables
 
 //  Global Prototype Functions
+//  Attempts to open the given string as a Serial Port.
 void serial_init (const char* portPath);
+//  Closes the Serial Port if open.
 void serial_close (void);
+//  Returns whether the Serial Port is open.
 uint8_t serial_isOpen ();
+//  Getter functions.
 void serial_version_get (void);
 void serial_spTemp_get (void);
+//  Setter functions.
+//void serial_spTemp_set (uint16_t newSp);
 
 //  *--</Definitions>--*  //
 

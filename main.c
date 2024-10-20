@@ -200,6 +200,7 @@ void cb_signal_terminate (int sigType)
 
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 {
+	//  Toggle open-ness of the Serial port.
 	if (serial_isOpen ())
 	{
 		serial_close ();
@@ -208,11 +209,13 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 	else
 	{
 		serial_init (gtk_label_get_text (GTK_LABEL (label_ser_port)));
+		//  Only update thee button's label if we opened successfully.
 		if (serial_isOpen ())
 			gtk_button_set_label (theButton, TEXT_SER_CLOSE);
 	}
 }
 
+//  Getter buttons.
 static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data)
 {
 	serial_version_get ();
@@ -221,5 +224,8 @@ static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data)
 {
 	serial_spTemp_get ();
 }
+
+//  Setter buttons.
+//static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 
 //  *--</Callbacks>--*  //

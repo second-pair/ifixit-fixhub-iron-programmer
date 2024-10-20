@@ -139,20 +139,20 @@ GtkWidget* gui_layout_create (void)
 	gtk_box_append (GTK_BOX (box_main), gtk_label_new (NULL));
 	label_ser_port = gtk_label_new ("/dev/ttyACM0");
 	gtk_box_append (GTK_BOX (box_main), label_ser_port);
-	GtkWidget* btn_ser_connect = gtk_button_new_with_label ("Open Port");
+	GtkWidget* btn_ser_connect = gtk_button_new_with_label (TEXT_SER_OPEN);
 	g_signal_connect (btn_ser_connect, "clicked", G_CALLBACK (cb_btn_ser_connect_clicked), NULL);
 	gtk_box_append (GTK_BOX (box_main), btn_ser_connect);
 	gtk_box_append (GTK_BOX (box_main), gtk_label_new (NULL));
 
 	//  Create some initial core parameters.
-	GtkWidget* label_version_title = gtk_label_new ("Version:");
+	GtkWidget* label_version_title = gtk_label_new (TEXT_PARAM_VERSION);
 	gtk_box_append (GTK_BOX (box_main), label_version_title);
 	label_version_curr = gtk_label_new ("<version>");
 	gtk_box_append (GTK_BOX (box_main), label_version_curr);
 	GtkWidget* btn_version_get = gtk_button_new_with_label ("Get");
 	g_signal_connect (btn_version_get, "clicked", G_CALLBACK (cb_btn_version_get_clicked), NULL);
 	gtk_box_append (GTK_BOX (box_main), btn_version_get);
-	GtkWidget* label_spTemp_title = gtk_label_new ("Temp Setpoint:");
+	GtkWidget* label_spTemp_title = gtk_label_new (TEXT_PARAM_SP_TEMP);
 	gtk_box_append (GTK_BOX (box_main), label_spTemp_title);
 	label_spTemp_curr = gtk_label_new ("<spTemp>");
 	gtk_box_append (GTK_BOX (box_main), label_spTemp_curr);
@@ -201,10 +201,18 @@ void cb_signal_terminate (int sigType)
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 {
 	if (serial_isOpen ())
+	{
 		serial_close ();
+		gtk_button_set_label (theButton, TEXT_SER_OPEN);
+	}
 	else
+	{
 		serial_init (gtk_label_get_text (GTK_LABEL (label_ser_port)));
+		if (serial_isOpen ())
+			gtk_button_set_label (theButton, TEXT_SER_CLOSE);
+	}
 }
+
 static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data)
 {
 	serial_version_get ();

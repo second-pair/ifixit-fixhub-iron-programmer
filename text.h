@@ -23,6 +23,10 @@
 
 //  Top-Level
 #define TEXT_TL_TITLE "iFixit FixHub Iron Programmer"
+#define TEXT_SER_OPEN "Open Port"
+#define TEXT_SER_CLOSE "Close Port"
+#define TEXT_PARAM_VERSION "Version"
+#define TEXT_PARAM_SP_TEMP "Temp Setpoint"
 
 //  *--</Text>--*  //
 

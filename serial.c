@@ -21,6 +21,14 @@
 #include "serial.h"
 
 //  Defines
+#define BUFF_SIZE 256
+#define WAIT_COUNT 100
+#define WAIT_SLEEP_MS 1
+
+#define CMD_VERSION_GET "version\n"
+#define CMD_VERSION_GET_LEN 8
+#define CMD_SP_TEMP_GET "settings get activetemp\n"
+#define CMD_SP_TEMP_GET_LEN 24
 
 //  Local Type Definitions
 
@@ -32,7 +40,11 @@ struct sp_port* port_iron = NULL;
 //  Truly Global Variables
 
 //  Local Prototype Functions
-//uint8_t subLocal (void);
+static inline int priv_read (uint8_t* buffRead, const char* cmd, uint16_t length, uint8_t** start);
+static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmd, uint16_t length, uint8_t** start);
+static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmd, uint16_t length);
+static inline void priv_waitInStart (void);
+static inline void priv_waitInComplete (void);
 
 //  *--</Preparations>--*  //
 
@@ -68,6 +80,7 @@ void serial_init (const char* portPath)
 
 void serial_close (void)
 {
+	_NULL_RETURN_VOID (port_iron);
 	sp_close (port_iron);
 	port_iron = NULL;
 }
@@ -77,22 +90,88 @@ uint8_t serial_isOpen (void)
 	return port_iron != NULL;
 }
 
+static inline int priv_read (uint8_t* buffRead, const char* cmd, uint16_t length, uint8_t** start)
+{
+	_NULL_RETURN (port_iron, -1);
+	sp_nonblocking_write (port_iron, cmd, length);
+	priv_waitInStart ();
+	priv_waitInComplete ();
+	int amount = sp_nonblocking_read (port_iron, buffRead, BUFF_SIZE);
+	if (amount >= BUFF_SIZE)
+	{
+		buffRead [BUFF_SIZE-1] = '\0';
+		_LOG (1, "Buffer full!\n");
+	}
+	if (amount < 0)
+	{
+		buffRead [0] = '\0';
+		_LOG (1, "Read failed!  %d\n", amount);
+		return amount;
+	}
+	int stt = 0;
+	for (; buffRead [stt] != '\n' && buffRead [stt] != '\0' && stt < amount; (stt) ++) {}
+	if (stt < amount-1) (stt) ++;
+	*start = buffRead + stt;
+	return amount;
+}
+static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmd, uint16_t length, uint8_t** start)
+{
+	int amount = priv_read (buffRead, cmd, length, start);
+	if (amount < 0) return -1;
+	int end = 0;
+	for (; (*start) [end] != '\n' && (*start) [end] != '\0' && end < amount; (end) ++) {}
+	(*start) [end] = '\0';
+	return amount;
+}
+static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmd, uint16_t length)
+{
+	uint8_t* start;
+	int amount = priv_read_oneliner (buffRead, cmd, length, &start);
+	if (amount < 0) return INT16_MAX;
+	int decode = strtol ((char*)start, NULL, 10);
+	if (decode > INT16_MAX) decode = INT16_MAX;
+	if (decode < INT16_MIN) decode = INT16_MIN;
+	return decode;
+}
+static inline void priv_waitInStart (void)
+{
+	for (uint16_t i = 0; i < WAIT_COUNT; i ++)
+	{
+		if (sp_input_waiting (port_iron))
+			break;
+		_SLEEP_MS (WAIT_SLEEP_MS);
+	}
+}
+static inline void priv_waitInComplete (void)
+{
+	int waitingLast = 0;
+	int waiting = 0;
+	do
+	{
+		_SLEEP_MS (WAIT_SLEEP_MS);
+		waitingLast = waiting;
+		waiting = sp_input_waiting (port_iron);
+	}
+	while (waiting != waitingLast);
+}
+
+
 void serial_version_get (void)
 {
-	sp_nonblocking_write (port_iron, "version\n", 8);
-	_SLEEP_MS (100);
-	uint8_t buffRead [256];
-	int amount = sp_nonblocking_read (port_iron, buffRead, 256);
-	printf ("Read %d:  %s\n", amount, buffRead);
+	uint8_t buffRead [BUFF_SIZE];
+	uint8_t* start;
+	int amount = priv_read (buffRead, CMD_VERSION_GET, CMD_VERSION_GET_LEN, &start);
+	if (amount < 0) return;
+	printf ("Version:\n%s\n", start);
 }
 
 void serial_spTemp_get (void)
 {
-	sp_nonblocking_write (port_iron, "settings get activetemp\n", 24);
-	_SLEEP_MS (100);
-	uint8_t buffRead [256];
-	int amount = sp_nonblocking_read (port_iron, buffRead, 256);
-	printf ("Read %d:  %s\n", amount, buffRead);
+	uint8_t buffRead [BUFF_SIZE];
+	int16_t number = priv_read_int16_t (buffRead, CMD_SP_TEMP_GET, CMD_SP_TEMP_GET_LEN);
+	_VALUE_IS_RETURN_VOID (number, INT16_MAX);
+	printf ("SP Temp:  %u\n", number);
+	//gui_spTemp_update (number);
 }
 
 //  *--</Main Code>--*  //

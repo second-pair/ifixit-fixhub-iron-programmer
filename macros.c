@@ -23,7 +23,7 @@
 
 //  Logging Macros
 #ifndef LOG_LEVEL
-	#define LOG_LEVEL 0
+	#define LOG_LEVEL 2
 #endif
 //  Log to STDOUT, provided we meet the verbosity requirements.
 #define _LOG(logLevel, logString, ...) \
@@ -391,19 +391,17 @@
 
 
 //  Macro to implement a somewhat platform-neutral sleep function.
-//!  If threading, try to avoid using this where synchronisation may be affected.
-//!  If using a library with its own timing systems, try to use those instead of this.
-//!  Windows requires a copy of 'libwinpthread-1.dll' to be present in the PWD, or on the PATH.
 //  The idea here is to provide a few options to the implemeter - efficient but less accurate sleeps, vs accurate but less efficient sleeps.
 //  The `_SLEEP_* ()` functions do waiting by repeadedly sleeping the thread and checking if we've made it to our wait point.
 //  The `_SLEEP_**_SPIN ()` functions sleep the thread until we're close to our destination, then perform a "spin-wait" (AKA "busy-wait") for the remainder.
 //  In practice, the spin-waits seem to be accurate to +/- 200ns, but waste a lot of CPU time, particularly for waits < 100ms.
+//  https://man7.org/linux/man-pages/man3/usleep.3.html - "4.3BSD, POSIX.1-2001.  POSIX.1-2001 declares this function obsolete; use nanosleep(2) instead."
 #include <time.h>
 #define _SLEEP_MS(delayMs) \
 ({ \
 	struct timespec amount; \
-	amount .tv_sec = delayMs / 1000; \
-	amount .tv_nsec = delayMs % 1000000000; \
+	amount .tv_sec = (time_t)(delayMs) / 1000; \
+	amount .tv_nsec = ((int32_t)(delayMs) % 1000) * 1000000; \
 	nanosleep (&amount, NULL); \
 })
 //  If we've got more than 100ms waiting to do, wait until there's that much left.
@@ -452,7 +450,6 @@
 })
 
 //  Macros to facilitate simple timing.
-#include <time.h>
 static struct timespec __attribute__ ((__unused__)) _TIMER_STRUCT;
 #define _TIMER_START() \
 ({ \

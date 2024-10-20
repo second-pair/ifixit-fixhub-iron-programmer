@@ -42,6 +42,7 @@
 #pragma GCC diagnostic ignored "-Wconversion"
 	#include <stdio.h>
 	#include <stdint.h>
+	#include <gtk/gtk.h>
 #pragma GCC diagnostic pop
 
 //  Third-Party Submodules

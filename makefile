@@ -13,7 +13,7 @@
 
 #  Project Information
 PROG_NAME?=ifixit-fixhub-iron-programmer
-FOR_GTK4=0
+FOR_GTK4=1
 PATH_OBJ?=./obj
 ifeq ($(FOR_GTK4), 1)
 	PATH_BIN?=/gtk4-build/bin

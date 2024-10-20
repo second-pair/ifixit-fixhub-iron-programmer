@@ -97,6 +97,7 @@ int main (int argc, char** argv)
 {
 	_LOG (0, "-=-  "TEXT_TL_TITLE"  -=-\n");
 	_LOG (0, "Compiled:  %04d-%02d-%02d %s\n", COMP_YEAR, COMP_MONTH, COMP_DAY, __TIME__);
+	_LOG (0, "'libserialport' version:  %s\n", sp_get_package_version_string ());
 
 	//  Register signal handlers for signals we want to trap.
 	#if (defined _WIN32 || defined _WINDOWS || defined __CYGWIN__ || defined __NT__)
@@ -154,8 +155,8 @@ GtkWidget* gui_layout_create (void)
 	gtk_box_append (GTK_BOX (box_main), label_spTemp_title);
 	label_spTemp_curr = gtk_label_new ("<spTemp>");
 	gtk_box_append (GTK_BOX (box_main), label_spTemp_curr);
-	label_spTemp_new = gtk_label_new ("<newTemp>");
-	gtk_box_append (GTK_BOX (box_main), label_spTemp_new);
+	label_spTemp_curr = gtk_label_new ("<newTemp>");
+	gtk_box_append (GTK_BOX (box_main), label_spTemp_curr);
 	GtkWidget* btn_spTemp_get = gtk_button_new_with_label ("Get");
 	g_signal_connect (btn_spTemp_get, "clicked", G_CALLBACK (cb_btn_spTemp_get_clicked), NULL);
 	gtk_box_append (GTK_BOX (box_main), btn_spTemp_get);

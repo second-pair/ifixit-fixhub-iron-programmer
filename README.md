@@ -24,7 +24,7 @@ make init
 ###  Building
 make \<target\>
 
-###  Running
+###  Building & Running
 make run-\<target\>
 
 ###  Updating

@@ -49,6 +49,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 	//#include "cJSON/cJSON.h"
+	#include "libserialport/libserialport.h"
 #pragma GCC diagnostic pop
 
 //  Internal Includes

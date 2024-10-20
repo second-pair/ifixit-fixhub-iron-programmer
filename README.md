@@ -22,10 +22,10 @@ cd ifixit-fixhub-iron-programmer
 make init
 
 ###  Building
-make <target>
+make \<target\>
 
 ###  Running
-make run-<target>
+make run-\<target\>
 
 ###  Updating
 make update

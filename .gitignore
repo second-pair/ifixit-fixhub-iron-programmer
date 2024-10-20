@@ -1,0 +1,61 @@
+##  Global Git Ignore File
+#  This is mostly based off Octocat's gist and GitHub's LabVIEW template.
+#  Also got some extras thrown in from my build systems, messing around with IDEs and other things.
+#  https://gist.github.com/octocat/9257657
+#  https://github.com/github/gitignore
+
+
+#  Compiled Source
+*.bin
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+#  Archives
+#  It's usually better to unpack these files and commit the raw source.
+#  Git has its own built in compression methods.
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+#  Logs and Databases
+*.log
+*.sql
+*.sqlite
+
+#  Build System Files
+obj
+bin
+lib
+*/obj/*
+*/*.a
+build
+pico_sdk_import.cmake
+
+#  IDE Generated Files
+~*
+.vscode
+*.kate-swp
+*.swp
+
+#  Specifically LabVIEW
+*.aliases
+*.lvlps
+*.lvbitx
+
+#  OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

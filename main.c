@@ -52,8 +52,8 @@
 #include "includes.h"
 
 //  Defines
-#define GUI_TITLE "C GTK4 Template"
-#define GUI_URL "uk.second-pair.templates.c-gtk4"
+#define GUI_TITLE "iFixit FixHub Iron Programmer"
+#define GUI_URL "uk.second-pair.ifixit.fixhub-iron-programmer"
 #define GUI_APP_FLAGS G_APPLICATION_DEFAULT_FLAGS
 /*  Window Sizing
 0:  No target size - as allocated.
@@ -70,6 +70,7 @@
 
 //  Local Global Variables
 static volatile uint8_t gui_keepRunning = 1;
+static GtkWidget* label_ser_port = NULL;
 static GtkWidget* label_version_curr = NULL;
 static GtkWidget* label_spTemp_curr = NULL;
 static GtkWidget* label_spTemp_new = NULL;
@@ -136,7 +137,7 @@ GtkWidget* gui_layout_create (void)
 	//  Populate with a title and a button to connect to Serial.
 	gtk_box_append (GTK_BOX (box_main), gtk_label_new (TEXT_TL_TITLE));
 	gtk_box_append (GTK_BOX (box_main), gtk_label_new (NULL));
-	GtkWidget* label_ser_port = gtk_label_new ("/dev/ttyACM0");
+	label_ser_port = gtk_label_new ("/dev/ttyACM0");
 	gtk_box_append (GTK_BOX (box_main), label_ser_port);
 	GtkWidget* btn_ser_connect = gtk_button_new_with_label ("Open Port");
 	g_signal_connect (btn_ser_connect, "clicked", G_CALLBACK (cb_btn_ser_connect_clicked), NULL);
@@ -155,8 +156,8 @@ GtkWidget* gui_layout_create (void)
 	gtk_box_append (GTK_BOX (box_main), label_spTemp_title);
 	label_spTemp_curr = gtk_label_new ("<spTemp>");
 	gtk_box_append (GTK_BOX (box_main), label_spTemp_curr);
-	label_spTemp_curr = gtk_label_new ("<newTemp>");
-	gtk_box_append (GTK_BOX (box_main), label_spTemp_curr);
+	label_spTemp_new = gtk_label_new ("<newTemp>");
+	gtk_box_append (GTK_BOX (box_main), label_spTemp_new);
 	GtkWidget* btn_spTemp_get = gtk_button_new_with_label ("Get");
 	g_signal_connect (btn_spTemp_get, "clicked", G_CALLBACK (cb_btn_spTemp_get_clicked), NULL);
 	gtk_box_append (GTK_BOX (box_main), btn_spTemp_get);
@@ -192,20 +193,25 @@ void cb_app_main_activate (GtkApplication* theApp, gpointer data)
 void cb_signal_terminate (int sigType)
 {
 	gui_keepRunning = 0;
+	if (serial_isOpen ())
+		serial_close ();
 	exit (0);
 }
 
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 {
-	_LOG (0, "Clicked.\n");
+	if (serial_isOpen ())
+		serial_close ();
+	else
+		serial_init (gtk_label_get_text (GTK_LABEL (label_ser_port)));
 }
 static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data)
 {
-	_LOG (0, "Clicked.\n");
+	serial_version_get ();
 }
 static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data)
 {
-	_LOG (0, "Clicked.\n");
+	serial_spTemp_get ();
 }
 
 //  *--</Callbacks>--*  //

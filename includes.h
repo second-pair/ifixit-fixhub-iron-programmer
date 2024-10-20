@@ -55,6 +55,7 @@
 //  Internal Includes
 #include "text.h"
 #include "macros.c"
+#include "serial.h"
 
 //  *--</Includes>--*  //
 

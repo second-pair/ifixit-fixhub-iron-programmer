@@ -12,8 +12,8 @@
 
 //  *--</Preface>--*  */
 
-#ifndef MY_MODULE_H
-#define MY_MODULE_H
+#ifndef SERIAL_H
+#define SERIAL_H
 
 
 
@@ -31,7 +31,11 @@
 //  Truly Global Variables
 
 //  Global Prototype Functions
-//uint8_t subGlobal (void);
+void serial_init (const char* portPath);
+void serial_close (void);
+uint8_t serial_isOpen ();
+void serial_version_get (void);
+void serial_spTemp_get (void);
 
 //  *--</Definitions>--*  //
 

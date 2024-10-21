@@ -36,7 +36,11 @@
 #define CMD_SP_TEMP_GET "settings get activetemp\n"
 #define CMD_SP_TEMP_GET_LEN 24
 #define CMD_SP_TEMP_SET "settings set activetemp"
-#define CMD_SP_TEMP_SET_LEN 24
+#define CMD_SP_TEMP_SET_LEN 23
+#define CMD_MAX_TEMP_GET "settings get maxtemp\n"
+#define CMD_MAX_TEMP_GET_LEN 21
+#define CMD_MAX_TEMP_SET "settings set maxtemp"
+#define CMD_MAX_TEMP_SET_LEN 20
 #define CMD_HEATER_DETAILS_GET "heater details\n"
 #define CMD_HEATER_DETAILS_GET_LEN 15
 
@@ -64,7 +68,9 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd);
 static void priv_serRoutine_next (void);
 static inline void priv_version_get (void);
 static inline void priv_spTemp_get (void);
+static inline void priv_maxTemp_get (void);
 static inline void priv_spTemp_set (ironCommand* ironCmd);
+static inline void priv_maxTemp_set (ironCommand* ironCmd);
 //  ...  of Which are Callbacks
 void* thread_serial_run (void* args);
 
@@ -288,8 +294,14 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 		case ironCmdType_spTemp_get:
 			priv_spTemp_get ();
 			break;
+		case ironCmdType_maxTemp_get:
+			priv_maxTemp_get ();
+			break;
 		case ironCmdType_spTemp_set:
 			priv_spTemp_set (ironCmd);
+			break;
+		case ironCmdType_maxTemp_set:
+			priv_maxTemp_set (ironCmd);
 			break;
 		default:
 			break;
@@ -307,6 +319,9 @@ static void priv_serRoutine_next (void)
 			break;
 		case ironCmdType_spTemp_get:
 			priv_spTemp_get ();
+			break;
+		case ironCmdType_maxTemp_get:
+			priv_maxTemp_get ();
 			break;
 		default:
 			break;
@@ -335,6 +350,13 @@ static inline void priv_spTemp_get (void)
 	_VALUE_IS_RETURN_VOID (number, INT16_MAX);
 	gui_spTemp_update (number);
 }
+static inline void priv_maxTemp_get (void)
+{
+	uint8_t buffRead [SERIAL_BUFF_SIZE];
+	int16_t number = priv_read_int16_t (buffRead, CMD_MAX_TEMP_GET, CMD_MAX_TEMP_GET_LEN);
+	_VALUE_IS_RETURN_VOID (number, INT16_MAX);
+	gui_maxTemp_update (number);
+}
 
 
 //  Setter functions.
@@ -344,6 +366,12 @@ static inline void priv_spTemp_set (ironCommand* ironCmd)
 	int amount = priv_send_params (CMD_SP_TEMP_SET, CMD_SP_TEMP_SET_LEN, ironCmd -> params);
 	if (amount < 0) return;
 	priv_spTemp_get ();
+}
+static inline void priv_maxTemp_set (ironCommand* ironCmd)
+{
+	int amount = priv_send_params (CMD_MAX_TEMP_SET, CMD_MAX_TEMP_SET_LEN, ironCmd -> params);
+	if (amount < 0) return;
+	priv_maxTemp_get ();
 }
 
 

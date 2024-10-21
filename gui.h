@@ -28,6 +28,7 @@
 //  Defines
 #define GUI_PORT_DEFAULT "/dev/ttyACM0"
 #define GUI_SP_TEMP_DEFAULT "350"
+#define GUI_MAX_TEMP_DEFAULT "420"
 
 //  Global Type Definitions
 
@@ -38,6 +39,7 @@
 //  Global Prototype Functions
 void cb_app_main_activate (GtkApplication* theApp, gpointer data);
 void gui_spTemp_update (uint16_t newSp);
+void gui_maxTemp_update (uint16_t newSp);
 
 //  *--</Definitions>--*  //
 

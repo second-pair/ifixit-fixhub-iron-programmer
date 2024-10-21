@@ -32,6 +32,8 @@ static GtkWidget* text_ser_port = NULL;
 static GtkWidget* label_version_curr = NULL;
 static GtkWidget* label_spTemp_curr = NULL;
 static GtkWidget* text_spTemp_new = NULL;
+static GtkWidget* label_maxTemp_curr = NULL;
+static GtkWidget* text_maxTemp_new = NULL;
 
 //  Truly Global Variables
 
@@ -48,7 +50,9 @@ static GtkWidget* priv_config_create (void);
 //  Local Prototype Callbacks
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data);
 static gboolean cb_spTemp_update_to (gpointer data);
+static gboolean cb_maxTemp_update_to (gpointer data);
 
 //  *--</Preparations>--*  //
 
@@ -119,7 +123,25 @@ static GtkWidget* priv_core_create (void)
 	GtkWidget* grid_core = gtk_grid_new ();
 	gtk_grid_set_column_homogeneous (GTK_GRID (grid_core), 1);
 	gtk_grid_set_row_homogeneous (GTK_GRID (grid_core), 1);
-	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new (TEXT_CORE_TITLE), 0, 0, 3, 1);
+	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new (TEXT_CORE_TITLE), 0, 0, 4, 1);
+
+	/*  (Intended) States:
+	Switch Off
+	Sleep
+	Idle
+	Heating
+	Cooling
+	At Temperature
+	No Tip
+	*/
+	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new (TEXT_CORE_STATE), 1, 1, 1, 1);
+	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new ("Switch Off"), 2, 1, 1, 1);
+
+	//  Live Readouts
+	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new (TEXT_CORE_READOUT), 0, 2, 1, 1);
+	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new ("<live temp>"), 1, 2, 1, 1);
+	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new ("<live power>"), 2, 2, 1, 1);
+	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new ("<live DC>"), 3, 2, 1, 1);
 
 	return grid_core;
 }
@@ -133,6 +155,7 @@ static GtkWidget* priv_setpoints_create (void)
 	gtk_grid_set_column_homogeneous (GTK_GRID (grid_setpoints), 1);
 	gtk_grid_set_row_homogeneous (GTK_GRID (grid_setpoints), 1);
 	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TITLE), 0, 0, 4, 1);
+
 	//  Setpoint Temp
 	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TEMP), 0, 1, 1, 1);
 	label_spTemp_curr = gtk_label_new ("<spTemp>");
@@ -143,8 +166,17 @@ static GtkWidget* priv_setpoints_create (void)
 	GtkWidget* btn_spTemp_set = gtk_button_new_with_label ("Set");
 	g_signal_connect (btn_spTemp_set, "clicked", G_CALLBACK (cb_btn_spTemp_set_clicked), NULL);
 	gtk_grid_attach (GTK_GRID (grid_setpoints), btn_spTemp_set, 3, 1, 1, 1);
+
 	//  Max Temp
 	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TEMP_MAX), 0, 2, 1, 1);
+	label_maxTemp_curr = gtk_label_new ("<maxTemp>");
+	gtk_grid_attach (GTK_GRID (grid_setpoints), label_maxTemp_curr, 1, 2, 1, 1);
+	GtkEntryBuffer* buffer_maxTemp_new = gtk_entry_buffer_new (GUI_MAX_TEMP_DEFAULT, -1);
+	text_maxTemp_new = gtk_text_new_with_buffer (buffer_maxTemp_new);
+	gtk_grid_attach (GTK_GRID (grid_setpoints), text_maxTemp_new, 2, 2, 1, 1);
+	GtkWidget* btn_maxTemp_set = gtk_button_new_with_label ("Set");
+	g_signal_connect (btn_maxTemp_set, "clicked", G_CALLBACK (cb_btn_maxTemp_set_clicked), NULL);
+	gtk_grid_attach (GTK_GRID (grid_setpoints), btn_maxTemp_set, 3, 2, 1, 1);
 
 	return grid_setpoints;
 }
@@ -186,11 +218,15 @@ static GtkWidget* priv_config_create (void)
 
 
 //  Update API
-
-void gui_spTemp_update (uint16_t newSp)
+void gui_spTemp_update (uint16_t newValue)
 {
-	_LOG (4, "SP Temp:  %u\n", newSp);
-	g_idle_add_full (G_PRIORITY_LOW, cb_spTemp_update_to, (gpointer)(uintptr_t)newSp, NULL);
+	_LOG (4, "SP Temp:  %u\n", newValue);
+	g_idle_add_full (G_PRIORITY_LOW, cb_spTemp_update_to, (gpointer)(uintptr_t)newValue, NULL);
+}
+void gui_maxTemp_update (uint16_t newValue)
+{
+	_LOG (4, "Max Temp:  %u\n", newValue);
+	g_idle_add_full (G_PRIORITY_LOW, cb_maxTemp_update_to, (gpointer)(uintptr_t)newValue, NULL);
 }
 
 
@@ -251,6 +287,20 @@ static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%u", newSp);
 	serial_cmd_submit (ironCmd);
 }
+static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data)
+{
+	GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (text_maxTemp_new));
+	const char* text = gtk_entry_buffer_get_text (buffer);
+	int decode = strtol (text, NULL, 10);
+	if (decode > INT16_MAX) decode = INT16_MAX;
+	if (decode < INT16_MIN) decode = INT16_MIN;
+	uint16_t newSp = (uint16_t)decode;
+	ironCommand* ironCmd = malloc (sizeof (ironCommand));
+	_NULL_EXIT (ironCmd);
+	ironCmd -> type = ironCmdType_maxTemp_set;
+	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%u", newSp);
+	serial_cmd_submit (ironCmd);
+}
 
 //  Update Timeouts
 static gboolean cb_spTemp_update_to (gpointer data)
@@ -258,6 +308,13 @@ static gboolean cb_spTemp_update_to (gpointer data)
 	char updateText [LABEL_LEN_NUMBER];
 	snprintf (updateText, LABEL_LEN_NUMBER, "%u", (uint16_t)(uintptr_t)data);
 	gtk_label_set_text (GTK_LABEL (label_spTemp_curr), updateText);
+	return 0;
+}
+static gboolean cb_maxTemp_update_to (gpointer data)
+{
+	char updateText [LABEL_LEN_NUMBER];
+	snprintf (updateText, LABEL_LEN_NUMBER, "%u", (uint16_t)(uintptr_t)data);
+	gtk_label_set_text (GTK_LABEL (label_maxTemp_curr), updateText);
 	return 0;
 }
 

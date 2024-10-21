@@ -29,14 +29,15 @@
 #define SERIAL_BUFF_SIZE 1024
 #define SERIAL_CMD_SIZE 64
 #define SERIAL_PARAM_SIZE 32
+#define SERIAL_IRON_GET_TYPE_MAX 2
 
 //  Global Type Definitions
 
 //  Global Enumerations
 typedef enum ironCommandType
 {
-	ironCmdType_version_get,
-	ironCmdType_spTemp_get, ironCmdType_spTemp_set
+	ironCmdType_version_get, ironCmdType_spTemp_get,
+	ironCmdType_spTemp_set
 } ironCommandType;
 
 //  Global Structures

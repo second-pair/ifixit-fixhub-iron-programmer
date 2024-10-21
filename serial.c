@@ -60,6 +60,8 @@ static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, 
 static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, const char* params);
 static inline void priv_waitInStart (void);
 static inline void priv_waitInComplete (void);
+static inline void priv_serCmd_despatch (ironCommand* ironCmd);
+static void priv_serRoutine_next (void);
 static inline void priv_version_get (void);
 static inline void priv_spTemp_get (void);
 static inline void priv_spTemp_set (ironCommand* ironCmd);
@@ -293,6 +295,26 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 			break;
 	}
 }
+//  Routine data-fetch actioner.
+static void priv_serRoutine_next (void)
+{
+	//  Step through the get-type commands each time this function is called.
+	static ironCommandType typeNext = 0;
+	switch (typeNext++)
+	{
+		case ironCmdType_version_get:
+			priv_version_get ();
+			break;
+		case ironCmdType_spTemp_get:
+			priv_spTemp_get ();
+			break;
+		default:
+			break;
+	}
+	//  Prevent "overflowing" into the Set region.
+	if (typeNext >= SERIAL_IRON_GET_TYPE_MAX)
+		typeNext = 0;
+}
 
 
 //  Getter functions.
@@ -303,7 +325,7 @@ static inline void priv_version_get (void)
 	uint8_t* start;
 	int amount = priv_read_skipEchoBack (buffRead, CMD_VERSION_GET, CMD_VERSION_GET_LEN, &start);
 	if (amount < 0) return;
-	printf ("Version:\n%s\n", start);
+	_LOG (5, "Version:\n%s\n", start);
 }
 
 static inline void priv_spTemp_get (void)
@@ -340,7 +362,8 @@ void* thread_serial_run (void* args)
 		if (ironCmd != NULL)
 			priv_serCmd_despatch (ironCmd);
 		else
-			{}  //readouts ();
+			priv_serRoutine_next ();
+		//#  Consider implementing this anyway so we don't bog down the soldering iron.
 		//_SLEEP_MS (THREAD_SLEEP_MS); - this gets handled fine by `g_async_queue_timeout_pop ()`.
 	}
 	return NULL;

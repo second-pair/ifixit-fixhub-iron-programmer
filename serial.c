@@ -17,12 +17,13 @@
 //  *--<Preparations>--*  //
 
 //  Includes
-//#include <pthread.h>  //  Must be first - https://www.ibm.com/docs/en/aix/7.2?topic=p-pthread-mutex-initializer-macro
 #include "serial.h"
 
 //  Defines
 #define WAIT_COUNT 100
 #define WAIT_SLEEP_MS 1
+#define THREAD_SLEEP_MS 1
+#define THREAD_QUEUE_WAIT_MS 1
 
 #define PORT_BAUD 115200
 #define PORT_BITS_DATA 8
@@ -34,6 +35,8 @@
 #define CMD_VERSION_GET_LEN 8
 #define CMD_SP_TEMP_GET "settings get activetemp\n"
 #define CMD_SP_TEMP_GET_LEN 24
+#define CMD_HEATER_DETAILS_GET "heater details\n"
+#define CMD_HEATER_DETAILS_GET_LEN 15
 
 //  Local Type Definitions
 
@@ -42,25 +45,29 @@
 //  Local Global Variables
 struct sp_port* port_iron = NULL;
 GAsyncQueue* priv_cmdQueue = NULL;
+pthread_t thread_serial;
+sig_atomic_t thread_run = 0;
 
 //  Truly Global Variables
 
 //  Local Prototype Functions
-static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
+static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t length);
+static inline int priv_read_skipEchoBack (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
 static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
 static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length);
 static inline void priv_waitInStart (void);
 static inline void priv_waitInComplete (void);
-static inline void priv_version_get (void)
-static inline void priv_spTemp_get (void)
-static inline void priv_spTemp_set (void)
+static inline void priv_version_get (void);
+static inline void priv_spTemp_get (void);
+static inline void priv_spTemp_set (ironCommand* ironCmd);
+//  ...  of Which are Callbacks
+void* thread_serial_run (void* args);
 
 //  *--</Preparations>--*  //
 
 
 
 //  *--<Public Code>--*  //
-
 
 void serial_init (const char* portPath)
 {
@@ -88,8 +95,13 @@ void serial_init (const char* portPath)
 	sp_set_config_flowcontrol (config_iron, PORT_FLOW_CONTROL);
 	sp_set_config (port_iron, config_iron);
 	sp_free_config (config_iron);
+
 	//  Set up the queue.
 	priv_cmdQueue = g_async_queue_new ();
+
+	//  Create the command-handling thread.
+	thread_run = 1;
+	pthread_create (&thread_serial, NULL, thread_serial_run	, NULL);
 }
 
 void serial_close (void)
@@ -101,7 +113,7 @@ void serial_close (void)
 	//  Clean up the Serial Command queue.
 	_NULL_RETURN_VOID (priv_cmdQueue);
 	g_async_queue_lock (priv_cmdQueue);
-	while (g_async_queue_length_unlocked (priv_cmdQueue))
+	while (g_async_queue_length_unlocked (priv_cmdQueue) > 0)
 	{
 		ironCommand* ironCmd = g_async_queue_pop_unlocked (priv_cmdQueue);
 		free (ironCmd);
@@ -110,6 +122,10 @@ void serial_close (void)
 	g_async_queue_unlock (priv_cmdQueue);
 	g_async_queue_unref (priv_cmdQueue);
 	priv_cmdQueue = NULL;
+
+	//  Stop & collect the command-handling thread.
+	thread_run = 0;
+	pthread_join (thread_serial, NULL);
 }
 
 uint8_t serial_isOpen (void)
@@ -150,7 +166,7 @@ void serial_cmd_noParams_submit (ironCommandType type)
 
 
 //  Send a command, wait for the iron to send its response, skip the echo-back and return the rest.
-static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start)
+static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t length)
 {
 	_NULL_RETURN (port_iron, -1);
 	//  Write our command and wait for a suitable response to queue.
@@ -168,8 +184,16 @@ static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t len
 	{
 		buffRead [0] = '\0';
 		_LOG (1, "Read failed!  %d\n", amount);
-		return amount;
 	}
+	return amount;
+}
+
+static inline int priv_read_skipEchoBack (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start)
+{
+	//  Perform the read.
+	int amount = priv_read (buffRead, cmdStr, length);
+	if (amount < 0)
+		return amount;
 	//  Skip past the echo-back first line response.
 	int stt = 0;
 	for (; buffRead [stt] != '\n' && buffRead [stt] != '\0' && stt < amount; (stt) ++) {}
@@ -183,7 +207,7 @@ static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t len
 static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start)
 {
 	//  Perform a command-send-and-read and check for errors.
-	int amount = priv_read (buffRead, cmdStr, length, start);
+	int amount = priv_read_skipEchoBack (buffRead, cmdStr, length, start);
 	if (amount < 0) return -1;
 	//  Find the end of the response line and cap the string there.
 	int end = 0;
@@ -208,6 +232,11 @@ static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, 
 	return decode;
 }
 
+/*static inline uint8_t priv_send_params (cmd, len, params, len)
+{
+
+	priv_read
+}*/
 
 //  Wait upto 'WAIT_COUNT' times for Serial data to start gathering.
 static inline void priv_waitInStart (void)
@@ -235,13 +264,33 @@ static inline void priv_waitInComplete (void)
 }
 
 
+//  Serial Command despatcher.
+static inline void priv_serCmd_despatch (ironCommand* ironCmd)
+{
+	switch (ironCmd -> type)
+	{
+		case ironCmdType_version_get:
+			priv_version_get ();
+			break;
+		case ironCmdType_spTemp_get:
+			priv_spTemp_get ();
+			break;
+		case ironCmdType_spTemp_set:
+			priv_spTemp_set (ironCmd);
+			break;
+		default:
+			break;
+	}
+}
+
+
 //  Getter functions.
 
 static inline void priv_version_get (void)
 {
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
-	int amount = priv_read (buffRead, CMD_VERSION_GET, CMD_VERSION_GET_LEN, &start);
+	int amount = priv_read_skipEchoBack (buffRead, CMD_VERSION_GET, CMD_VERSION_GET_LEN, &start);
 	if (amount < 0) return;
 	printf ("Version:\n%s\n", start);
 }
@@ -251,15 +300,24 @@ static inline void priv_spTemp_get (void)
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	int16_t number = priv_read_int16_t (buffRead, CMD_SP_TEMP_GET, CMD_SP_TEMP_GET_LEN);
 	_VALUE_IS_RETURN_VOID (number, INT16_MAX);
-	printf ("SP Temp:  %u\n", number);
+	_LOG (0, "SP Temp:  %u\n", number);
 	//gui_spTemp_update (number);
 }
 
 
 //  Setter functions.
 
-static inline void priv_spTemp_set (void)
-{}
+static inline void priv_spTemp_set (ironCommand* ironCmd)
+{
+
+
+	uint8_t buffRead [SERIAL_BUFF_SIZE];
+	//join (CMD_SP_TEMP_GET, ironCmd -> params, paramLength)
+	int amount = priv_read (buffRead, CMD_SP_TEMP_GET, CMD_SP_TEMP_GET_LEN);
+	if (amount < 0) return;
+	_LOG (3, "SP Temp sent.\n");
+	priv_spTemp_get ();
+}
 
 
 //  *--</Private Code>--*  //
@@ -267,5 +325,20 @@ static inline void priv_spTemp_set (void)
 
 
 //  *--<Callbacks>--*  //
+
+void* thread_serial_run (void* args)
+{
+	while (thread_run)
+	{
+		//  Handle any queued commands.
+		ironCommand* ironCmd = g_async_queue_timeout_pop (priv_cmdQueue, THREAD_QUEUE_WAIT_MS);
+		if (ironCmd != NULL)
+			priv_serCmd_despatch (ironCmd);
+		else
+			{}  //readouts ();
+		//_SLEEP_MS (THREAD_SLEEP_MS); - this gets handled fine by `g_async_queue_timeout_pop ()`.
+	}
+	return NULL;
+}
 
 //  *--</Callbacks>--*  //

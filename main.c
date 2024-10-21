@@ -48,7 +48,6 @@
 //  *--<Preparations>--*  //
 
 //  Includes
-//#include <pthread.h>  //  Must be first - https://www.ibm.com/docs/en/aix/7.2?topic=p-pthread-mutex-initializer-macro
 #include "includes.h"
 
 //  Defines

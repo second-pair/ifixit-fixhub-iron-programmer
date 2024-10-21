@@ -23,7 +23,7 @@
 #include "includes.h"
 
 //  Defines
-#define SERIAL_BUFF_SIZE 256
+#define SERIAL_BUFF_SIZE 1024
 #define SERIAL_CMD_SIZE 32
 #define SERIAL_PARAM_SIZE 32
 

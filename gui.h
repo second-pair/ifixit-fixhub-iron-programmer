@@ -35,6 +35,7 @@
 
 //  Global Prototype Functions
 void cb_app_main_activate (GtkApplication* theApp, gpointer data);
+void gui_spTemp_update (uint16_t newSp);
 
 //  *--</Definitions>--*  //
 

@@ -311,8 +311,7 @@ static inline void priv_spTemp_get (void)
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	int16_t number = priv_read_int16_t (buffRead, CMD_SP_TEMP_GET, CMD_SP_TEMP_GET_LEN);
 	_VALUE_IS_RETURN_VOID (number, INT16_MAX);
-	_LOG (0, "SP Temp:  %u\n", number);
-	//gui_spTemp_update (number);
+	gui_spTemp_update (number);
 }
 
 
@@ -322,7 +321,6 @@ static inline void priv_spTemp_set (ironCommand* ironCmd)
 {
 	int amount = priv_send_params (CMD_SP_TEMP_SET, CMD_SP_TEMP_SET_LEN, ironCmd -> params);
 	if (amount < 0) return;
-	_LOG (3, "SP Temp sent.\n");
 	priv_spTemp_get ();
 }
 

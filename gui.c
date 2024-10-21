@@ -21,6 +21,7 @@
 #include "gui.h"
 
 //  Defines
+#define LABEL_LEN_NUMBER 16
 
 //  Local Type Definitions
 
@@ -30,7 +31,7 @@
 static GtkWidget* label_ser_port = NULL;
 static GtkWidget* label_version_curr = NULL;
 static GtkWidget* label_spTemp_curr = NULL;
-static GtkWidget* label_spTemp_new = NULL;
+static GtkWidget* text_spTemp_new = NULL;
 
 //  Truly Global Variables
 
@@ -42,12 +43,14 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data);
+static gboolean cb_spTemp_update_to (gpointer data);
 
 //  *--</Preparations>--*  //
 
 
 
 //  *--<Main Code>--*  //
+
 
 static GtkWidget* gui_layout_create (void)
 {
@@ -81,14 +84,24 @@ static GtkWidget* gui_layout_create (void)
 	GtkWidget* btn_spTemp_get = gtk_button_new_with_label ("Get");
 	g_signal_connect (btn_spTemp_get, "clicked", G_CALLBACK (cb_btn_spTemp_get_clicked), NULL);
 	gtk_box_append (GTK_BOX (box_main), btn_spTemp_get);
-	label_spTemp_new = gtk_label_new ("<newTemp>");
-	gtk_box_append (GTK_BOX (box_main), label_spTemp_new);
+	text_spTemp_new = gtk_text_new ();
+	gtk_box_append (GTK_BOX (box_main), text_spTemp_new);
 	GtkWidget* btn_spTemp_set = gtk_button_new_with_label ("Set");
 	g_signal_connect (btn_spTemp_set, "clicked", G_CALLBACK (cb_btn_spTemp_set_clicked), NULL);
 	gtk_box_append (GTK_BOX (box_main), btn_spTemp_set);
 
 	return box_main;
 }
+
+
+//  Update API
+
+void gui_spTemp_update (uint16_t newSp)
+{
+	_LOG (4, "SP Temp:  %u\n", newSp);
+	g_idle_add_full (G_PRIORITY_LOW, cb_spTemp_update_to, (gpointer)(uintptr_t)newSp, NULL);
+}
+
 
 //  *--</Main Code>--*  //
 
@@ -142,7 +155,12 @@ static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data)
 }
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 {
-	uint16_t newSp = 320;
+	GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (text_spTemp_new));
+	const char* text = gtk_entry_buffer_get_text (buffer);
+	int decode = strtol (text, NULL, 10);
+	if (decode > INT16_MAX) decode = INT16_MAX;
+	if (decode < INT16_MIN) decode = INT16_MIN;
+	uint16_t newSp = (uint16_t)decode;
 	ironCommand* ironCmd = malloc (sizeof (ironCommand));
 	_NULL_EXIT (ironCmd);
 	ironCmd -> type = ironCmdType_spTemp_set;
@@ -152,5 +170,16 @@ static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 
 //  Setter buttons.
 //static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
+
+
+//  Update Timeouts
+static gboolean cb_spTemp_update_to (gpointer data)
+{
+	char updateText [LABEL_LEN_NUMBER];
+	snprintf (updateText, LABEL_LEN_NUMBER, "%u", (uint16_t)(uintptr_t)data);
+	gtk_label_set_text (GTK_LABEL (label_spTemp_curr), updateText);
+	return 0;
+}
+
 
 //  *--</Callbacks>--*  //

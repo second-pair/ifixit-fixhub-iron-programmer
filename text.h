@@ -25,8 +25,17 @@
 #define TEXT_TL_TITLE "iFixit FixHub Iron Programmer"
 #define TEXT_SER_OPEN "Open Port"
 #define TEXT_SER_CLOSE "Close Port"
-#define TEXT_PARAM_VERSION "Version"
-#define TEXT_PARAM_SP_TEMP "Temp Setpoint"
+//  Core Readouts
+#define TEXT_CORE_TITLE "Core Readouts"
+//  Setpoints
+#define TEXT_SETPOINTS_TITLE "Setpoints"
+#define TEXT_SETPOINTS_TEMP "Target Temp"
+#define TEXT_SETPOINTS_TEMP_MAX "Max Temp"
+//  Secondary Readouts
+#define TEXT_AUX_TITLE "Secondary Readouts"
+#define TEXT_AUX_VERSION "Version"
+//  Configuration
+#define TEXT_CONFIG_TITLE "Configuration"
 
 //  *--</Text>--*  //
 

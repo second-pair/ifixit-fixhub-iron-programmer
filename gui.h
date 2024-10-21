@@ -26,6 +26,8 @@
 #include "includes.h"
 
 //  Defines
+#define GUI_PORT_DEFAULT "/dev/ttyACM0"
+#define GUI_SP_TEMP_DEFAULT "350"
 
 //  Global Type Definitions
 

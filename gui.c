@@ -28,7 +28,7 @@
 //  Local Structures
 
 //  Local Global Variables
-static GtkWidget* label_ser_port = NULL;
+static GtkWidget* text_ser_port = NULL;
 static GtkWidget* label_version_curr = NULL;
 static GtkWidget* label_spTemp_curr = NULL;
 static GtkWidget* text_spTemp_new = NULL;
@@ -36,12 +36,17 @@ static GtkWidget* text_spTemp_new = NULL;
 //  Truly Global Variables
 
 //  Local Prototype Functions
-static GtkWidget* gui_layout_create (void);
+static GtkWidget* priv_layout_create (void);
+static GtkWidget* priv_sep_create (GtkOrientation orientation);
+static GtkWidget* priv_ser_create (void);
+static GtkWidget* priv_core_create (void);
+static GtkWidget* priv_setpoints_create (void);
+static GtkWidget* priv_aux_create (void);
+static GtkWidget* priv_config_create (void);
+
 
 //  Local Prototype Callbacks
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data);
-static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data);
-static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data);
 static gboolean cb_spTemp_update_to (gpointer data);
 
@@ -52,45 +57,131 @@ static gboolean cb_spTemp_update_to (gpointer data);
 //  *--<Main Code>--*  //
 
 
-static GtkWidget* gui_layout_create (void)
+static GtkWidget* priv_layout_create (void)
 {
-	//  Create the top-level container widget.
+	//  Create the top-level container widget & a title.
 	GtkWidget* box_main = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 	gtk_widget_set_halign (box_main, GTK_ALIGN_CENTER);
 	gtk_widget_set_valign (box_main, GTK_ALIGN_CENTER);
-
-	//  Populate with a title and a button to connect to Serial.
 	gtk_box_append (GTK_BOX (box_main), gtk_label_new (TEXT_TL_TITLE));
 	gtk_box_append (GTK_BOX (box_main), gtk_label_new (NULL));
-	label_ser_port = gtk_label_new ("/dev/ttyACM0");
-	gtk_box_append (GTK_BOX (box_main), label_ser_port);
-	GtkWidget* btn_ser_connect = gtk_button_new_with_label (TEXT_SER_OPEN);
-	g_signal_connect (btn_ser_connect, "clicked", G_CALLBACK (cb_btn_ser_connect_clicked), NULL);
-	gtk_box_append (GTK_BOX (box_main), btn_ser_connect);
-	gtk_box_append (GTK_BOX (box_main), gtk_label_new (NULL));
 
-	//  Create some initial core parameters.
-	GtkWidget* label_version_title = gtk_label_new (TEXT_PARAM_VERSION);
-	gtk_box_append (GTK_BOX (box_main), label_version_title);
-	label_version_curr = gtk_label_new ("<version>");
-	gtk_box_append (GTK_BOX (box_main), label_version_curr);
-	GtkWidget* btn_version_get = gtk_button_new_with_label ("Get");
-	g_signal_connect (btn_version_get, "clicked", G_CALLBACK (cb_btn_version_get_clicked), NULL);
-	gtk_box_append (GTK_BOX (box_main), btn_version_get);
-	GtkWidget* label_spTemp_title = gtk_label_new (TEXT_PARAM_SP_TEMP);
-	gtk_box_append (GTK_BOX (box_main), label_spTemp_title);
-	label_spTemp_curr = gtk_label_new ("<spTemp>");
-	gtk_box_append (GTK_BOX (box_main), label_spTemp_curr);
-	GtkWidget* btn_spTemp_get = gtk_button_new_with_label ("Get");
-	g_signal_connect (btn_spTemp_get, "clicked", G_CALLBACK (cb_btn_spTemp_get_clicked), NULL);
-	gtk_box_append (GTK_BOX (box_main), btn_spTemp_get);
-	text_spTemp_new = gtk_text_new ();
-	gtk_box_append (GTK_BOX (box_main), text_spTemp_new);
-	GtkWidget* btn_spTemp_set = gtk_button_new_with_label ("Set");
-	g_signal_connect (btn_spTemp_set, "clicked", G_CALLBACK (cb_btn_spTemp_set_clicked), NULL);
-	gtk_box_append (GTK_BOX (box_main), btn_spTemp_set);
+	//  Append the section widgets.
+	gtk_box_append (GTK_BOX (box_main), priv_ser_create ());
+	gtk_box_append (GTK_BOX (box_main), priv_sep_create (GTK_ORIENTATION_HORIZONTAL));
+	gtk_box_append (GTK_BOX (box_main), priv_core_create ());
+	gtk_box_append (GTK_BOX (box_main), priv_sep_create (GTK_ORIENTATION_HORIZONTAL));
+	gtk_box_append (GTK_BOX (box_main), priv_setpoints_create ());
+	gtk_box_append (GTK_BOX (box_main), priv_sep_create (GTK_ORIENTATION_HORIZONTAL));
+	gtk_box_append (GTK_BOX (box_main), priv_aux_create ());
+	gtk_box_append (GTK_BOX (box_main), priv_sep_create (GTK_ORIENTATION_HORIZONTAL));
+	gtk_box_append (GTK_BOX (box_main), priv_config_create ());
+
+	/*  Advanced
+	PID Kp, Ki, Kd, Max i
+	Control loop period uS
+	*/
 
 	return box_main;
+}
+
+static GtkWidget* priv_sep_create (GtkOrientation orientation)
+{
+	GtkWidget* separator = gtk_separator_new (orientation);
+	gtk_widget_set_margin_top (separator, 10);
+	gtk_widget_set_margin_bottom (separator, 10);
+	return separator;
+}
+
+//  Section functions for ^.
+static GtkWidget* priv_ser_create (void)
+{
+	//  Create Serial connection widgets.
+	//#  This should end up being some kind of popup.
+	GtkWidget* box_serial = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_widget_set_halign (box_serial, GTK_ALIGN_CENTER);
+	GtkEntryBuffer* buffer_ser_port = gtk_entry_buffer_new (GUI_PORT_DEFAULT, -1);
+	text_ser_port = gtk_text_new_with_buffer (buffer_ser_port);
+	gtk_box_append (GTK_BOX (box_serial), text_ser_port);
+	GtkWidget* btn_ser_connect = gtk_button_new_with_label (TEXT_SER_OPEN);
+	g_signal_connect (btn_ser_connect, "clicked", G_CALLBACK (cb_btn_ser_connect_clicked), NULL);
+	gtk_box_append (GTK_BOX (box_serial), btn_ser_connect);
+	return box_serial;
+}
+static GtkWidget* priv_core_create (void)
+{
+	/*  Core Readouts
+	Switch ON/OFF   State IDLE
+	Switch Status [heater details]
+	Curr Temp, Curr Power / Duty Cycle % [heater details / heater controlloop]
+	Status/State [heater details]
+	*/
+	GtkWidget* grid_core = gtk_grid_new ();
+	gtk_grid_set_column_homogeneous (GTK_GRID (grid_core), 1);
+	gtk_grid_set_row_homogeneous (GTK_GRID (grid_core), 1);
+	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new (TEXT_CORE_TITLE), 0, 0, 3, 1);
+
+	return grid_core;
+}
+static GtkWidget* priv_setpoints_create (void)
+{
+	/*  Setpoints
+	SP Temp [settings activetemp]
+	SP Min Temp [seems to be fixed at 200], SP Max Temp [settings maxtemp]
+	*/
+	GtkWidget* grid_setpoints = gtk_grid_new ();
+	gtk_grid_set_column_homogeneous (GTK_GRID (grid_setpoints), 1);
+	gtk_grid_set_row_homogeneous (GTK_GRID (grid_setpoints), 1);
+	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TITLE), 0, 0, 4, 1);
+	//  Setpoint Temp
+	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TEMP), 0, 1, 1, 1);
+	label_spTemp_curr = gtk_label_new ("<spTemp>");
+	gtk_grid_attach (GTK_GRID (grid_setpoints), label_spTemp_curr, 1, 1, 1, 1);
+	GtkEntryBuffer* buffer_spTemp_new = gtk_entry_buffer_new (GUI_SP_TEMP_DEFAULT, -1);
+	text_spTemp_new = gtk_text_new_with_buffer (buffer_spTemp_new);
+	gtk_grid_attach (GTK_GRID (grid_setpoints), text_spTemp_new, 2, 1, 1, 1);
+	GtkWidget* btn_spTemp_set = gtk_button_new_with_label ("Set");
+	g_signal_connect (btn_spTemp_set, "clicked", G_CALLBACK (cb_btn_spTemp_set_clicked), NULL);
+	gtk_grid_attach (GTK_GRID (grid_setpoints), btn_spTemp_set, 3, 1, 1, 1);
+	//  Max Temp
+	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TEMP_MAX), 0, 2, 1, 1);
+
+	return grid_setpoints;
+}
+static GtkWidget* priv_aux_create (void)
+{
+	/*  Secondary Readouts
+	Tip Installed [heater details]
+	Serial Number [otp read], MCU S/N [mcu_sn], Version [otp read, version]
+	Uptime [uptime]
+	Fault Mask [heater faultmask]
+	Accelerometer [mxc4005 magnitude]
+	*/
+	GtkWidget* grid_aux = gtk_grid_new ();
+	gtk_grid_set_column_homogeneous (GTK_GRID (grid_aux), 1);
+	gtk_grid_set_row_homogeneous (GTK_GRID (grid_aux), 1);
+	gtk_grid_attach (GTK_GRID (grid_aux), gtk_label_new (TEXT_AUX_TITLE), 0, 0, 3, 1);
+	GtkWidget* label_version_title = gtk_label_new (TEXT_AUX_VERSION);
+	gtk_grid_attach (GTK_GRID (grid_aux), label_version_title, 0, 1, 1, 1);
+	label_version_curr = gtk_label_new ("<version>");
+	gtk_grid_attach (GTK_GRID (grid_aux), label_version_curr, 2, 1, 1, 1);
+	return grid_aux;
+}
+static GtkWidget* priv_config_create (void)
+{
+	/*  Configuration
+	Celsius/Farenheit [settings units]
+	Idle Enable [settings idletimerenable], Idle Timer [settings idletimer], Idle Temp [settings idletemp]
+	Sleep Enable [settings sleeptimerenable], Sleep Timer [settings sleeptimer]
+	Temperature Correction [settings tempcorrection]
+	Reboot [bootloader reboot / reset]
+	Reset
+	*/
+	GtkWidget* grid_config = gtk_grid_new ();
+	gtk_grid_set_column_homogeneous (GTK_GRID (grid_config), 1);
+	gtk_grid_set_row_homogeneous (GTK_GRID (grid_config), 1);
+	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_TITLE), 0, 0, 3, 1);
+	return grid_config;
 }
 
 
@@ -123,7 +214,7 @@ void cb_app_main_activate (GtkApplication* theApp, gpointer data)
 	#endif
 
 	//  Create its child and present it.
-	gtk_window_set_child (GTK_WINDOW (window_main), gui_layout_create ());
+	gtk_window_set_child (GTK_WINDOW (window_main), priv_layout_create ());
 	gtk_window_present (GTK_WINDOW (window_main));
 }
 
@@ -137,22 +228,15 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 	}
 	else
 	{
-		serial_init (gtk_label_get_text (GTK_LABEL (label_ser_port)));
+		GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (text_ser_port));
+		serial_init (gtk_entry_buffer_get_text (buffer));
 		//  Only update thee button's label if we opened successfully.
 		if (serial_isOpen ())
 			gtk_button_set_label (theButton, TEXT_SER_CLOSE);
 	}
 }
 
-//  Getter buttons.
-static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data)
-{
-	serial_cmd_noParams_submit (ironCmdType_version_get);
-}
-static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data)
-{
-	serial_cmd_noParams_submit (ironCmdType_spTemp_get);
-}
+//  Setter buttons.
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 {
 	GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (text_spTemp_new));
@@ -168,10 +252,6 @@ static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 	serial_cmd_submit (ironCmd);
 }
 
-//  Setter buttons.
-//static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
-
-
 //  Update Timeouts
 static gboolean cb_spTemp_update_to (gpointer data)
 {
@@ -180,6 +260,5 @@ static gboolean cb_spTemp_update_to (gpointer data)
 	gtk_label_set_text (GTK_LABEL (label_spTemp_curr), updateText);
 	return 0;
 }
-
 
 //  *--</Callbacks>--*  //

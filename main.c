@@ -87,6 +87,7 @@ void cb_signal_terminate (int sigType);
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data);
 
 //  *--</Preparations>--*  //
 
@@ -156,11 +157,14 @@ GtkWidget* gui_layout_create (void)
 	gtk_box_append (GTK_BOX (box_main), label_spTemp_title);
 	label_spTemp_curr = gtk_label_new ("<spTemp>");
 	gtk_box_append (GTK_BOX (box_main), label_spTemp_curr);
-	label_spTemp_new = gtk_label_new ("<newTemp>");
-	gtk_box_append (GTK_BOX (box_main), label_spTemp_new);
 	GtkWidget* btn_spTemp_get = gtk_button_new_with_label ("Get");
 	g_signal_connect (btn_spTemp_get, "clicked", G_CALLBACK (cb_btn_spTemp_get_clicked), NULL);
 	gtk_box_append (GTK_BOX (box_main), btn_spTemp_get);
+	label_spTemp_new = gtk_label_new ("<newTemp>");
+	gtk_box_append (GTK_BOX (box_main), label_spTemp_new);
+	GtkWidget* btn_spTemp_set = gtk_button_new_with_label ("Set");
+	g_signal_connect (btn_spTemp_set, "clicked", G_CALLBACK (cb_btn_spTemp_set_clicked), NULL);
+	gtk_box_append (GTK_BOX (box_main), btn_spTemp_set);
 
 	return box_main;
 }
@@ -218,11 +222,21 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 //  Getter buttons.
 static void cb_btn_version_get_clicked (GtkButton* theButton, gpointer data)
 {
-	serial_version_get ();
+	serial_cmd_noParams_submit (ironCmdType_version_get);
 }
 static void cb_btn_spTemp_get_clicked (GtkButton* theButton, gpointer data)
 {
-	serial_spTemp_get ();
+	serial_cmd_noParams_submit (ironCmdType_spTemp_get);
+}
+static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
+{
+	uint16_t newSp = 320;
+	ironCommand* ironCmd = malloc (sizeof (ironCommand));
+	_NULL_EXIT (ironCmd);
+	ironCmd -> type = ironCmdType_spTemp_set;
+	ironCmd -> paramLength = snprintf (
+		ironCmd -> params, SERIAL_PARAM_SIZE, "%u", newSp);
+	serial_cmd_submit (ironCmd);
 }
 
 //  Setter buttons.

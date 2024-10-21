@@ -49,6 +49,13 @@
 void cb_app_main_activate (GtkApplication* theApp, gpointer data);
 void gui_spTemp_update (uint16_t newSp);
 void gui_maxTemp_update (uint16_t newSp);
+//void gui_idleEnable_update (value);
+//void gui_idleTimer_update (value);
+//void gui_idleTemp_update (value);
+//void gui_sleepEnable_update (value);
+//void gui_sleepTimer_update (value);
+//void gui_units_update (value);
+//void gui_calTemp_update (value);
 
 //  *--</Definitions>--*  //
 

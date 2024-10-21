@@ -78,10 +78,22 @@ static GtkWidget* priv_config_create (void);
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_reset_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data);
+
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_idle_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_sleep_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data);
+
 static gboolean cb_spTemp_update_to (gpointer data);
 static gboolean cb_maxTemp_update_to (gpointer data);
+//static gboolean cb_idleEnable_update_to (gpointer data);
+//static gboolean cb_idleTimer_update_to (gpointer data);
+//static gboolean cb_idleTemp_update_to (gpointer data);
+//static gboolean cb_sleepEnable_update_to (gpointer data);
+//static gboolean cb_sleepTimer_update_to (gpointer data);
+//static gboolean cb_units_update_to (gpointer data);
+//static gboolean cb_calTemp_update_to (gpointer data);
 
 //  *--</Preparations>--*  //
 
@@ -272,13 +284,17 @@ static GtkWidget* priv_config_create (void)
 	gtk_grid_attach (GTK_GRID (grid_config), sw_idleEnable, 2, rp, 1, 1);
 	label_idleTimer = gtk_label_new ("<idleTimer>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_idleTimer, 3, rp, 1, 1);
-	//text_idleTimer
+	GtkEntryBuffer* buffer_idleTimer = gtk_entry_buffer_new (GUI_IDLE_TIMER_DEFAULT, -1);
+	text_idleTimer = gtk_text_new_with_buffer (buffer_idleTimer);
+	gtk_grid_attach (GTK_GRID (grid_config), text_idleTimer, 4, rp, 1, 1);
 	label_idleTemp = gtk_label_new ("<idleTemp>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_idleTemp, 5, rp, 1, 1);
-	//text_idleTemp
-	rp ++;
-	//GUI_IDLE_TIMER_DEFAULT
-	//GUI_IDLE_TEMP_DEFAULT
+	GtkEntryBuffer* buffer_idleTemp = gtk_entry_buffer_new (GUI_IDLE_TEMP_DEFAULT, -1);
+	text_idleTemp = gtk_text_new_with_buffer (buffer_idleTemp);
+	gtk_grid_attach (GTK_GRID (grid_config), text_idleTemp, 6, rp, 1, 1);
+	GtkWidget* btn_idle = gtk_button_new_with_label (TEXT_SET);
+	gtk_grid_attach (GTK_GRID (grid_config), btn_idle, 7, rp++, 1, 1);
+	g_signal_connect (btn_idle, "clicked", G_CALLBACK (cb_btn_idle_clicked), NULL);
 
 	//  Sleep Timer
 	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_SLEEP), 0, rp, 1, 1);
@@ -289,13 +305,15 @@ static GtkWidget* priv_config_create (void)
 	gtk_grid_attach (GTK_GRID (grid_config), sw_sleepEnable, 2, rp, 1, 1);
 	label_sleepTimer = gtk_label_new ("<sleepTimer>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_sleepTimer, 3, rp, 1, 1);
-	//text_sleepTimer
-	rp ++;
-	//GUI_SLEEP_ENABLE_TIMER
+	GtkEntryBuffer* buffer_sleepTimer = gtk_entry_buffer_new (GUI_SLEEP_ENABLE_TIMER, -1);
+	text_sleepTimer = gtk_text_new_with_buffer (buffer_sleepTimer);
+	gtk_grid_attach (GTK_GRID (grid_config), text_sleepTimer, 4, rp, 1, 1);
+	GtkWidget* btn_sleep = gtk_button_new_with_label (TEXT_SET);
+	gtk_grid_attach (GTK_GRID (grid_config), btn_sleep, 5, rp++, 1, 1);
+	g_signal_connect (btn_sleep, "clicked", G_CALLBACK (cb_btn_sleep_clicked), NULL);
 
 	//  Units
 	GtkWidget* box_units = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-	gtk_widget_set_hexpand (box_units, 1);
 	gtk_box_set_homogeneous (GTK_BOX (box_units), 1);
 	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_COFIG_UNITS));
 	label_units = gtk_label_new ("<celsius>");
@@ -310,9 +328,12 @@ static GtkWidget* priv_config_create (void)
 	//  Calibration Temperature
 	label_calTemp = gtk_label_new ("<+0"TEXT_UNIT_TEMP_C">");
 	gtk_grid_attach (GTK_GRID (grid_config), label_calTemp, 2, rp, 1, 1);
-	//text_calTemp
-	rp ++;
-	//GUI_CAL_TEMP_DEFAULT
+	GtkEntryBuffer* buffer_calTemp = gtk_entry_buffer_new (GUI_CAL_TEMP_DEFAULT, -1);
+	text_calTemp = gtk_text_new_with_buffer (buffer_calTemp);
+	gtk_grid_attach (GTK_GRID (grid_config), text_calTemp, 3, rp, 1, 1);
+	GtkWidget* btn_calTemp = gtk_button_new_with_label (TEXT_SET);
+	gtk_grid_attach (GTK_GRID (grid_config), btn_calTemp, 4, rp++, 1, 1);
+	g_signal_connect (btn_calTemp, "clicked", G_CALLBACK (cb_btn_calTemp_clicked), NULL);
 
 	//  Reset & Reboot
 	GtkWidget* btn_reset = gtk_button_new_with_label (TEXT_CONFIG_RESET);
@@ -416,6 +437,18 @@ static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data)
 {
 	text_cmdSubmit_number (ironCmdType_maxTemp_set, text_maxTemp_new,
 		uint16_t, INT16_MIN, INT16_MAX);
+}
+static void cb_btn_idle_clicked (GtkButton* theButton, gpointer data)
+{
+	_LOG (0, "Here.\n");
+}
+static void cb_btn_sleep_clicked (GtkButton* theButton, gpointer data)
+{
+	_LOG (0, "Here.\n");
+}
+static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data)
+{
+	_LOG (0, "Here.\n");
 }
 
 

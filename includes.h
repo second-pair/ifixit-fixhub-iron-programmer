@@ -22,8 +22,17 @@
 
 //  *--<Defines>--*  //
 
-//  Things
-#define STUFF 0
+//  GUI
+#define GUI_TITLE "iFixit FixHub Iron Programmer"
+#define GUI_URL "uk.second-pair.ifixit.fixhub-iron-programmer"
+/*  Window Sizing
+0:  No target size - as allocated.
+1:  Fixed target size.
+2:  Fullscreen.
+*/
+#define GUI_WINDOW_MODE 1
+#define GUI_WINDOW_SIZE_W 640
+#define GUI_WINDOW_SIZE_H 480
 
 //  *--</Defines>--*  //
 
@@ -57,6 +66,7 @@
 #include "text.h"
 #include "macros.c"
 #include "serial.h"
+#include "gui.h"
 
 //  *--</Includes>--*  //
 

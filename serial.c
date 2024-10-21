@@ -2,10 +2,10 @@
 
  -=-  Author Details  -=-
  Blair Edwards
- Maybe we workin', maybe we no.
+ My own work for my owned device.
 
  -=-  Part Of  -=-
- the_project
+ ifixit-fixhub-iron-programmer
 
  -=-  Credit where Credit is Due  -=-
  -=>  Library / code snippet etc.

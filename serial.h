@@ -24,7 +24,7 @@
 
 //  Defines
 #define SERIAL_BUFF_SIZE 1024
-#define SERIAL_CMD_SIZE 32
+#define SERIAL_CMD_SIZE 64
 #define SERIAL_PARAM_SIZE 32
 
 //  Global Type Definitions
@@ -41,7 +41,6 @@ typedef struct ironCommand
 {
 	ironCommandType type;
 	char params [SERIAL_PARAM_SIZE];
-	uint8_t paramLength;
 	//idleFunc
 } ironCommand;
 

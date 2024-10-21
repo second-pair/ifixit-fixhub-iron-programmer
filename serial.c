@@ -35,6 +35,8 @@
 #define CMD_VERSION_GET_LEN 8
 #define CMD_SP_TEMP_GET "settings get activetemp\n"
 #define CMD_SP_TEMP_GET_LEN 24
+#define CMD_SP_TEMP_SET "settings set activetemp"
+#define CMD_SP_TEMP_SET_LEN 24
 #define CMD_HEATER_DETAILS_GET "heater details\n"
 #define CMD_HEATER_DETAILS_GET_LEN 15
 
@@ -55,6 +57,7 @@ static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t len
 static inline int priv_read_skipEchoBack (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
 static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
 static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length);
+static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, const char* params);
 static inline void priv_waitInStart (void);
 static inline void priv_waitInComplete (void);
 static inline void priv_version_get (void);
@@ -138,9 +141,6 @@ uint8_t serial_isOpen (void)
 void serial_cmd_submit (ironCommand* ironCmd)
 {
 	_NULL_RETURN_VOID (ironCmd);
-	//  Ensure the length is sane.  We can assume the final character will always be a '\0'.
-	if (ironCmd -> paramLength >= SERIAL_PARAM_SIZE)
-		ironCmd -> paramLength = SERIAL_PARAM_SIZE-1;
 	if (priv_cmdQueue != NULL)
 		g_async_queue_push (priv_cmdQueue, ironCmd);
 }
@@ -152,7 +152,6 @@ void serial_cmd_noParams_submit (ironCommandType type)
 	_NULL_EXIT (ironCmd);
 	ironCmd -> type = type;
 	ironCmd -> params [0] = '\0';
-	ironCmd -> paramLength = 0;
 	if (priv_cmdQueue != NULL)
 		g_async_queue_push (priv_cmdQueue, ironCmd);
 }
@@ -232,11 +231,23 @@ static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, 
 	return decode;
 }
 
-/*static inline uint8_t priv_send_params (cmd, len, params, len)
+static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, const char* params)
 {
-
-	priv_read
-}*/
+	uint8_t buffRead [SERIAL_BUFF_SIZE];
+	//  See if we can shortcut the send.
+	if (params [0] == '\0')
+		return priv_read (buffRead, baseCmd, length);
+	//  Build the full command string.
+	char fullCmd [SERIAL_CMD_SIZE];
+	int amount = snprintf (fullCmd, SERIAL_CMD_SIZE, "%s %s\n", baseCmd, params);
+	if (amount > SERIAL_CMD_SIZE)
+	{
+		_LOG (1, "Full command too long!  %d > %d\n", amount, SERIAL_CMD_SIZE);
+		return -1;
+	}
+	//  Send it.
+	return priv_read (buffRead, fullCmd, amount);
+}
 
 //  Wait upto 'WAIT_COUNT' times for Serial data to start gathering.
 static inline void priv_waitInStart (void)
@@ -309,11 +320,7 @@ static inline void priv_spTemp_get (void)
 
 static inline void priv_spTemp_set (ironCommand* ironCmd)
 {
-
-
-	uint8_t buffRead [SERIAL_BUFF_SIZE];
-	//join (CMD_SP_TEMP_GET, ironCmd -> params, paramLength)
-	int amount = priv_read (buffRead, CMD_SP_TEMP_GET, CMD_SP_TEMP_GET_LEN);
+	int amount = priv_send_params (CMD_SP_TEMP_SET, CMD_SP_TEMP_SET_LEN, ironCmd -> params);
 	if (amount < 0) return;
 	_LOG (3, "SP Temp sent.\n");
 	priv_spTemp_get ();

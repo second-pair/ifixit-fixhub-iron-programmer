@@ -233,8 +233,7 @@ static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 	ironCommand* ironCmd = malloc (sizeof (ironCommand));
 	_NULL_EXIT (ironCmd);
 	ironCmd -> type = ironCmdType_spTemp_set;
-	ironCmd -> paramLength = snprintf (
-		ironCmd -> params, SERIAL_PARAM_SIZE, "%u", newSp);
+	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%u", newSp);
 	serial_cmd_submit (ironCmd);
 }
 

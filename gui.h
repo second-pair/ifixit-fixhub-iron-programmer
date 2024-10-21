@@ -29,6 +29,15 @@
 #define GUI_PORT_DEFAULT "/dev/ttyACM0"
 #define GUI_SP_TEMP_DEFAULT "350"
 #define GUI_MAX_TEMP_DEFAULT "420"
+#define GUI_IDLE_ENABLE_DEFAULT 1
+#define GUI_IDLE_TIMER_DEFAULT "30"
+#define GUI_IDLE_TEMP_DEFAULT "200"
+#define GUI_SLEEP_ENABLE_DEFAULT 1
+#define GUI_SLEEP_ENABLE_TIMER "60"
+#define GUI_UNIT_CELSIUS_DEFAULT 1
+#define GUI_CAL_TEMP_DEFAULT "0"
+
+//#  Defaults for the Config section.
 
 //  Global Type Definitions
 

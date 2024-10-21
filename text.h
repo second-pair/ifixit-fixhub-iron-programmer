@@ -21,6 +21,13 @@
 
 //  *--<Text>--*  //
 
+//  Fundamentals
+#define TEXT_UNIT_TEMP_C "°C"
+#define TEXT_UNIT_TEMP_F "°F"
+#define TEMP_UNIT_POWER "W"
+#define TEXT_UNIT_PCT "%"
+#define TEXT_UNIT_PCTF "%%"
+#define TEXT_SET "Set"
 //  Top-Level
 #define TEXT_TL_TITLE "iFixit FixHub Iron Programmer"
 #define TEXT_SER_OPEN "Open Port"
@@ -35,9 +42,15 @@
 #define TEXT_SETPOINTS_TEMP_MAX "Max Temp"
 //  Secondary Readouts
 #define TEXT_AUX_TITLE "Secondary Readouts"
+#define TEXT_AUX_UPTIME "Uptime"
 #define TEXT_AUX_VERSION "Version"
 //  Configuration
 #define TEXT_CONFIG_TITLE "Configuration"
+#define TEXT_CONFIG_IDLE "Idle"
+#define TEXT_CONFIG_SLEEP "Sleep"
+#define TEXT_COFIG_UNITS "Units"
+#define TEXT_CONFIG_RESET "Reset"
+#define TEXT_CONFIG_REBOOT "Reboot"
 
 //  *--</Text>--*  //
 

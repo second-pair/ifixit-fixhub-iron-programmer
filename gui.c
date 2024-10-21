@@ -29,11 +29,38 @@
 
 //  Local Global Variables
 static GtkWidget* text_ser_port = NULL;
-static GtkWidget* label_version_curr = NULL;
+//  Serial
+//  Core Readouts
+static GtkWidget* label_state = NULL;
+static GtkWidget* label_liveTemp = NULL;
+static GtkWidget* label_livePower = NULL;
+static GtkWidget* label_liveDutyCycle = NULL;
+//  Setpoints
 static GtkWidget* label_spTemp_curr = NULL;
 static GtkWidget* text_spTemp_new = NULL;
 static GtkWidget* label_maxTemp_curr = NULL;
 static GtkWidget* text_maxTemp_new = NULL;
+//  Auxiliary Readouts
+static GtkWidget* label_uptime = NULL;
+static GtkWidget* label_faults = NULL;
+static GtkWidget* label_version = NULL;
+static GtkWidget* label_sn_device = NULL;
+static GtkWidget* label_sn_mcu = NULL;
+//  Configuration
+static GtkWidget* sw_idleEnable = NULL;
+static GtkWidget* text_idleTimer = NULL;
+static GtkWidget* text_idleTemp = NULL;
+static GtkWidget* sw_sleepEnable = NULL;
+static GtkWidget* text_sleepTimer = NULL;
+static GtkWidget* sw_units = NULL;
+static GtkWidget* text_calTemp = NULL;
+static GtkWidget* label_idleEnable = NULL;
+static GtkWidget* label_idleTimer = NULL;
+static GtkWidget* label_idleTemp = NULL;
+static GtkWidget* label_sleepEnable = NULL;
+static GtkWidget* label_sleepTimer = NULL;
+static GtkWidget* label_units = NULL;
+static GtkWidget* label_calTemp = NULL;
 
 //  Truly Global Variables
 
@@ -49,6 +76,8 @@ static GtkWidget* priv_config_create (void);
 
 //  Local Prototype Callbacks
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_reset_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data);
 static gboolean cb_spTemp_update_to (gpointer data);
@@ -117,8 +146,8 @@ static GtkWidget* priv_core_create (void)
 	/*  Core Readouts
 	Switch ON/OFF   State IDLE
 	Switch Status [heater details]
-	Curr Temp, Curr Power / Duty Cycle % [heater details / heater controlloop]
 	Status/State [heater details]
+	Curr Temp, Curr Power / Duty Cycle % [heater details / heater controlloop]
 	*/
 	GtkWidget* grid_core = gtk_grid_new ();
 	gtk_grid_set_column_homogeneous (GTK_GRID (grid_core), 1);
@@ -135,13 +164,17 @@ static GtkWidget* priv_core_create (void)
 	No Tip
 	*/
 	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new (TEXT_CORE_STATE), 1, 1, 1, 1);
-	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new ("Switch Off"), 2, 1, 1, 1);
+	label_state = gtk_label_new ("<state>");
+	gtk_grid_attach (GTK_GRID (grid_core), label_state, 2, 1, 1, 1);
 
 	//  Live Readouts
 	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new (TEXT_CORE_READOUT), 0, 2, 1, 1);
-	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new ("<live temp>"), 1, 2, 1, 1);
-	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new ("<live power>"), 2, 2, 1, 1);
-	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new ("<live DC>"), 3, 2, 1, 1);
+	label_liveTemp = gtk_label_new ("<live temp>");
+	gtk_grid_attach (GTK_GRID (grid_core), label_liveTemp, 1, 2, 1, 1);
+	label_livePower = gtk_label_new ("<live power>");
+	gtk_grid_attach (GTK_GRID (grid_core), label_livePower, 2, 2, 1, 1);
+	label_liveDutyCycle = gtk_label_new ("<live DC>");
+	gtk_grid_attach (GTK_GRID (grid_core), label_liveDutyCycle, 3, 2, 1, 1);
 
 	return grid_core;
 }
@@ -163,7 +196,7 @@ static GtkWidget* priv_setpoints_create (void)
 	GtkEntryBuffer* buffer_spTemp_new = gtk_entry_buffer_new (GUI_SP_TEMP_DEFAULT, -1);
 	text_spTemp_new = gtk_text_new_with_buffer (buffer_spTemp_new);
 	gtk_grid_attach (GTK_GRID (grid_setpoints), text_spTemp_new, 2, 1, 1, 1);
-	GtkWidget* btn_spTemp_set = gtk_button_new_with_label ("Set");
+	GtkWidget* btn_spTemp_set = gtk_button_new_with_label (TEXT_SET);
 	g_signal_connect (btn_spTemp_set, "clicked", G_CALLBACK (cb_btn_spTemp_set_clicked), NULL);
 	gtk_grid_attach (GTK_GRID (grid_setpoints), btn_spTemp_set, 3, 1, 1, 1);
 
@@ -174,7 +207,7 @@ static GtkWidget* priv_setpoints_create (void)
 	GtkEntryBuffer* buffer_maxTemp_new = gtk_entry_buffer_new (GUI_MAX_TEMP_DEFAULT, -1);
 	text_maxTemp_new = gtk_text_new_with_buffer (buffer_maxTemp_new);
 	gtk_grid_attach (GTK_GRID (grid_setpoints), text_maxTemp_new, 2, 2, 1, 1);
-	GtkWidget* btn_maxTemp_set = gtk_button_new_with_label ("Set");
+	GtkWidget* btn_maxTemp_set = gtk_button_new_with_label (TEXT_SET);
 	g_signal_connect (btn_maxTemp_set, "clicked", G_CALLBACK (cb_btn_maxTemp_set_clicked), NULL);
 	gtk_grid_attach (GTK_GRID (grid_setpoints), btn_maxTemp_set, 3, 2, 1, 1);
 
@@ -182,21 +215,35 @@ static GtkWidget* priv_setpoints_create (void)
 }
 static GtkWidget* priv_aux_create (void)
 {
-	/*  Secondary Readouts
-	Tip Installed [heater details]
-	Serial Number [otp read], MCU S/N [mcu_sn], Version [otp read, version]
+	/*  Auxiliary Readouts
 	Uptime [uptime]
 	Fault Mask [heater faultmask]
 	Accelerometer [mxc4005 magnitude]
+	Serial Number [otp read], MCU S/N [mcu_sn], Version [otp read, version]
 	*/
 	GtkWidget* grid_aux = gtk_grid_new ();
 	gtk_grid_set_column_homogeneous (GTK_GRID (grid_aux), 1);
 	gtk_grid_set_row_homogeneous (GTK_GRID (grid_aux), 1);
 	gtk_grid_attach (GTK_GRID (grid_aux), gtk_label_new (TEXT_AUX_TITLE), 0, 0, 3, 1);
-	GtkWidget* label_version_title = gtk_label_new (TEXT_AUX_VERSION);
-	gtk_grid_attach (GTK_GRID (grid_aux), label_version_title, 0, 1, 1, 1);
-	label_version_curr = gtk_label_new ("<version>");
-	gtk_grid_attach (GTK_GRID (grid_aux), label_version_curr, 2, 1, 1, 1);
+
+	//  Runtime Information
+	gtk_grid_attach (GTK_GRID (grid_aux), gtk_label_new (TEXT_AUX_UPTIME), 0, 1, 1, 1);
+	label_uptime = gtk_label_new ("<uptime>");
+	gtk_grid_attach (GTK_GRID (grid_aux), label_uptime, 1, 1, 1, 1);
+	label_faults = gtk_label_new ("<faults>");
+	gtk_grid_attach (GTK_GRID (grid_aux), label_faults, 2, 1, 1, 1);
+
+	//  Accelerometer
+	gtk_grid_attach (GTK_GRID (grid_aux), gtk_label_new ("<accelerometer>"), 0, 2, 3, 1);
+
+	//  Device Information
+	label_version = gtk_label_new ("<version>");
+	gtk_grid_attach (GTK_GRID (grid_aux), label_version, 0, 3, 1, 1);
+	label_sn_device = gtk_label_new ("<ser-number>");
+	gtk_grid_attach (GTK_GRID (grid_aux), label_sn_device, 1, 3, 1, 1);
+	label_sn_mcu = gtk_label_new ("<MCU-S/N>");
+	gtk_grid_attach (GTK_GRID (grid_aux), label_sn_mcu, 2, 3, 1, 1);
+
 	return grid_aux;
 }
 static GtkWidget* priv_config_create (void)
@@ -209,10 +256,72 @@ static GtkWidget* priv_config_create (void)
 	Reboot [bootloader reboot / reset]
 	Reset
 	*/
+	//?  Consider a popup for this.
 	GtkWidget* grid_config = gtk_grid_new ();
 	gtk_grid_set_column_homogeneous (GTK_GRID (grid_config), 1);
 	gtk_grid_set_row_homogeneous (GTK_GRID (grid_config), 1);
-	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_TITLE), 0, 0, 3, 1);
+	uint8_t rp = 0;
+	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_TITLE), 0, rp++, 3, 1);
+
+	//  Idle Timer
+	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_IDLE), 0, rp, 1, 1);
+	label_idleEnable = gtk_label_new ("<idleEnable>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_idleEnable, 1, rp, 1, 1);
+	sw_idleEnable = gtk_switch_new ();
+	gtk_switch_set_state (GTK_SWITCH (sw_idleEnable), GUI_IDLE_ENABLE_DEFAULT);
+	gtk_grid_attach (GTK_GRID (grid_config), sw_idleEnable, 2, rp, 1, 1);
+	label_idleTimer = gtk_label_new ("<idleTimer>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_idleTimer, 3, rp, 1, 1);
+	//text_idleTimer
+	label_idleTemp = gtk_label_new ("<idleTemp>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_idleTemp, 5, rp, 1, 1);
+	//text_idleTemp
+	rp ++;
+	//GUI_IDLE_TIMER_DEFAULT
+	//GUI_IDLE_TEMP_DEFAULT
+
+	//  Sleep Timer
+	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_SLEEP), 0, rp, 1, 1);
+	label_sleepEnable = gtk_label_new ("<sleepEnable>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_sleepEnable, 1, rp, 1, 1);
+	sw_sleepEnable = gtk_switch_new ();
+	gtk_switch_set_state (GTK_SWITCH (sw_sleepEnable), GUI_SLEEP_ENABLE_DEFAULT);
+	gtk_grid_attach (GTK_GRID (grid_config), sw_sleepEnable, 2, rp, 1, 1);
+	label_sleepTimer = gtk_label_new ("<sleepTimer>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_sleepTimer, 3, rp, 1, 1);
+	//text_sleepTimer
+	rp ++;
+	//GUI_SLEEP_ENABLE_TIMER
+
+	//  Units
+	GtkWidget* box_units = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_widget_set_hexpand (box_units, 1);
+	gtk_box_set_homogeneous (GTK_BOX (box_units), 1);
+	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_COFIG_UNITS));
+	label_units = gtk_label_new ("<celsius>");
+	gtk_box_append (GTK_BOX (box_units), label_units);
+	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_UNIT_TEMP_F));
+	sw_units = gtk_switch_new ();
+	gtk_switch_set_state (GTK_SWITCH (sw_units), GUI_UNIT_CELSIUS_DEFAULT);
+	gtk_box_append (GTK_BOX (box_units), sw_units);
+	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_UNIT_TEMP_C));
+	gtk_grid_attach (GTK_GRID (grid_config), box_units, 0, rp++, 5, 1);
+
+	//  Calibration Temperature
+	label_calTemp = gtk_label_new ("<+0"TEXT_UNIT_TEMP_C">");
+	gtk_grid_attach (GTK_GRID (grid_config), label_calTemp, 2, rp, 1, 1);
+	//text_calTemp
+	rp ++;
+	//GUI_CAL_TEMP_DEFAULT
+
+	//  Reset & Reboot
+	GtkWidget* btn_reset = gtk_button_new_with_label (TEXT_CONFIG_RESET);
+	gtk_grid_attach (GTK_GRID (grid_config), btn_reset, 1, rp, 1, 1);
+	g_signal_connect (btn_reset, "clicked", G_CALLBACK (cb_btn_reset_clicked), NULL);
+	GtkWidget* btn_reboot = gtk_button_new_with_label (TEXT_CONFIG_REBOOT);
+	gtk_grid_attach (GTK_GRID (grid_config), btn_reboot, 2, rp++, 1, 1);
+	g_signal_connect (btn_reboot, "clicked", G_CALLBACK (cb_btn_reboot_clicked), NULL);
+
 	return grid_config;
 }
 
@@ -270,6 +379,15 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 		if (serial_isOpen ())
 			gtk_button_set_label (theButton, TEXT_SER_CLOSE);
 	}
+}
+
+static void cb_btn_reset_clicked (GtkButton* theButton, gpointer data)
+{
+	_LOG (0, "Here.\n");
+}
+static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
+{
+	_LOG (0, "Here.\n");
 }
 
 //  Helper functions for the Setter Buttons

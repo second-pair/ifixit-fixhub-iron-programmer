@@ -272,50 +272,48 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 	}
 }
 
-//  Setter buttons.
+//  Helper functions for the Setter Buttons
+#define text_cmdSubmit_number(cmdType, theText, numType, numMin, numMax) \
+({ \
+	GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (theText)); \
+	const char* text = gtk_entry_buffer_get_text (buffer); \
+	int decode = strtol (text, NULL, 10); \
+	if (decode < numMin) decode = numMin; \
+	if (decode > numMax) decode = numMax; \
+	numType newSp = (numType)decode; \
+	ironCommand* ironCmd = malloc (sizeof (ironCommand)); \
+	_NULL_EXIT (ironCmd); \
+	ironCmd -> type = cmdType; \
+	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%u", newSp); \
+	serial_cmd_submit (ironCmd); \
+})
+
+//  Setter Buttons
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 {
-	GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (text_spTemp_new));
-	const char* text = gtk_entry_buffer_get_text (buffer);
-	int decode = strtol (text, NULL, 10);
-	if (decode > INT16_MAX) decode = INT16_MAX;
-	if (decode < INT16_MIN) decode = INT16_MIN;
-	uint16_t newSp = (uint16_t)decode;
-	ironCommand* ironCmd = malloc (sizeof (ironCommand));
-	_NULL_EXIT (ironCmd);
-	ironCmd -> type = ironCmdType_spTemp_set;
-	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%u", newSp);
-	serial_cmd_submit (ironCmd);
+	text_cmdSubmit_number (ironCmdType_spTemp_set, text_spTemp_new,
+		uint16_t, INT16_MIN, INT16_MAX);
 }
 static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data)
 {
-	GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (text_maxTemp_new));
-	const char* text = gtk_entry_buffer_get_text (buffer);
-	int decode = strtol (text, NULL, 10);
-	if (decode > INT16_MAX) decode = INT16_MAX;
-	if (decode < INT16_MIN) decode = INT16_MIN;
-	uint16_t newSp = (uint16_t)decode;
-	ironCommand* ironCmd = malloc (sizeof (ironCommand));
-	_NULL_EXIT (ironCmd);
-	ironCmd -> type = ironCmdType_maxTemp_set;
-	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%u", newSp);
-	serial_cmd_submit (ironCmd);
+	text_cmdSubmit_number (ironCmdType_maxTemp_set, text_maxTemp_new,
+		uint16_t, INT16_MIN, INT16_MAX);
 }
+
+
+//  Helper functions for the Update Timeouts
+#define label_update(theLabel, theNumber, numType) \
+({ \
+	char updateText [LABEL_LEN_NUMBER]; \
+	snprintf (updateText, LABEL_LEN_NUMBER, "%u", (numType)(uintptr_t)theNumber); \
+	gtk_label_set_text (GTK_LABEL (theLabel), updateText); \
+	return 0; \
+})
 
 //  Update Timeouts
 static gboolean cb_spTemp_update_to (gpointer data)
-{
-	char updateText [LABEL_LEN_NUMBER];
-	snprintf (updateText, LABEL_LEN_NUMBER, "%u", (uint16_t)(uintptr_t)data);
-	gtk_label_set_text (GTK_LABEL (label_spTemp_curr), updateText);
-	return 0;
-}
+	{  label_update (label_spTemp_curr, data, uint16_t);  }
 static gboolean cb_maxTemp_update_to (gpointer data)
-{
-	char updateText [LABEL_LEN_NUMBER];
-	snprintf (updateText, LABEL_LEN_NUMBER, "%u", (uint16_t)(uintptr_t)data);
-	gtk_label_set_text (GTK_LABEL (label_maxTemp_curr), updateText);
-	return 0;
-}
+	{  label_update (label_maxTemp_curr, data, uint16_t);  }
 
 //  *--</Callbacks>--*  //

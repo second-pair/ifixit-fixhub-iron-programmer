@@ -122,6 +122,13 @@ static inline void priv_calTemp_get (void);
 //  Setter functions.
 static inline void priv_spTemp_set (ironCommand* ironCmd);
 static inline void priv_maxTemp_set (ironCommand* ironCmd);
+static inline void priv_idleEnable_set (ironCommand* ironCmd);
+static inline void priv_idleTimer_set (ironCommand* ironCmd);
+static inline void priv_idleTemp_set (ironCommand* ironCmd);
+static inline void priv_sleepEnable_set (ironCommand* ironCmd);
+static inline void priv_sleepTimer_set (ironCommand* ironCmd);
+static inline void priv_units_set (ironCommand* ironCmd);
+static inline void priv_calTemp_set (ironCommand* ironCmd);
 //  Operation command functions.
 static inline void priv_reset (void);
 static inline void priv_reboot (uint8_t restore);
@@ -391,6 +398,27 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 		case ironCmdType_maxTemp_set:
 			priv_maxTemp_set (ironCmd);
 			break;
+		case ironCmdType_idleEnable_set:
+			priv_idleEnable_set (ironCmd);
+			break;
+		case ironCmdType_idleTimer_set:
+			priv_idleTimer_set (ironCmd);
+			break;
+		case ironCmdType_idleTemp_set:
+			priv_idleTemp_set (ironCmd);
+			break;
+		case ironCmdType_sleepEnable_set:
+			priv_sleepEnable_set (ironCmd);
+			break;
+		case ironCmdType_sleepTimer_set:
+			priv_sleepTimer_set (ironCmd);
+			break;
+		case ironCmdType_units_set:
+			priv_units_set (ironCmd);
+			break;
+		case ironCmdType_calTemp_set:
+			priv_calTemp_set (ironCmd);
+			break;
 			//  Operation command functions.
 		case ironCmdType_reset:
 			priv_reset ();
@@ -562,19 +590,31 @@ static inline void priv_units_get (void)
 
 
 //  Setter functions.
-
+#define priv_set(cmd, cmdLen, readbackFunc) \
+({ \
+	int amount = priv_send_params (cmd, cmdLen, ironCmd -> params); \
+	if (amount < 0) \
+		return; \
+	readbackFunc (); \
+})
 static inline void priv_spTemp_set (ironCommand* ironCmd)
-{
-	int amount = priv_send_params (CMD_SP_TEMP_SET, CMD_SP_TEMP_SET_LEN, ironCmd -> params);
-	if (amount < 0) return;
-	priv_spTemp_get ();
-}
+	{  priv_set (CMD_SP_TEMP_SET, CMD_SP_TEMP_SET_LEN, priv_spTemp_get);  }
 static inline void priv_maxTemp_set (ironCommand* ironCmd)
-{
-	int amount = priv_send_params (CMD_MAX_TEMP_SET, CMD_MAX_TEMP_SET_LEN, ironCmd -> params);
-	if (amount < 0) return;
-	priv_maxTemp_get ();
-}
+	{  priv_set (CMD_MAX_TEMP_SET, CMD_MAX_TEMP_SET_LEN, priv_maxTemp_get);  }
+static inline void priv_idleEnable_set (ironCommand* ironCmd)
+	{  priv_set (CMD_IDLE_ENABLE_SET, CMD_IDLE_ENABLE_SET_LEN, priv_idleEnable_get);  }
+static inline void priv_idleTimer_set (ironCommand* ironCmd)
+	{  priv_set (CMD_IDLE_TIMER_SET, CMD_IDLE_TIMER_SET_LEN, priv_idleTimer_get);  }
+static inline void priv_idleTemp_set (ironCommand* ironCmd)
+	{  priv_set (CMD_IDLE_TEMP_SET, CMD_IDLE_TEMP_SET_LEN, priv_idleTemp_get);  }
+static inline void priv_sleepEnable_set (ironCommand* ironCmd)
+	{  priv_set (CMD_SLEEP_ENABLE_SET, CMD_SLEEP_ENABLE_SET_LEN, priv_sleepEnable_get);  }
+static inline void priv_sleepTimer_set (ironCommand* ironCmd)
+	{  priv_set (CMD_SLEEP_TIMER_SET, CMD_SLEEP_TIMER_SET_LEN, priv_sleepTimer_get);  }
+static inline void priv_units_set (ironCommand* ironCmd)
+	{  priv_set (CMD_UNITS_SET, CMD_UNITS_SET_LEN, priv_units_get);  }
+static inline void priv_calTemp_set (ironCommand* ironCmd)
+	{  priv_set (CMD_CAL_TEMP_SET, CMD_CAL_TEMP_SET_LEN, priv_calTemp_get);  }
 
 //  Operation command functions.
 static inline void priv_reset (void)

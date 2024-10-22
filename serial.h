@@ -47,9 +47,9 @@ typedef enum ironCommandType
 	ironCmdType_units_get, ironCmdType_calTemp_get,
 	//  Setters
 	ironCmdType_spTemp_set, ironCmdType_maxTemp_set,
-	/*idleEnable, idleTimer, idleTemp,
-	sleepEnable, sleepTimer,
-	units, calTemp,*/
+	ironCmdType_idleEnable_set, ironCmdType_idleTimer_set, ironCmdType_idleTemp_set,
+	ironCmdType_sleepEnable_set, ironCmdType_sleepTimer_set,
+	ironCmdType_units_set, ironCmdType_calTemp_set,
 	//  Operation Commands
 	ironCmdType_reset, ironCmdType_reboot
 } ironCommandType;

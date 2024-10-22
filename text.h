@@ -23,11 +23,17 @@
 
 //  Fundamentals
 #define TEXT_UNIT_TEMP_C "°C"
+#define TEXT_UNIT_TEMP_C_LONG "Celsius"
 #define TEXT_UNIT_TEMP_F "°F"
+#define TEXT_UNIT_TEMP_F_LONG "Farenheit"
 #define TEMP_UNIT_POWER "W"
 #define TEXT_UNIT_PCT "%"
 #define TEXT_UNIT_PCTF "%%"
 #define TEXT_SET "Set"
+#define TEXT_ENABLE "Enable"
+#define TEXT_ENABLED TEXT_ENABLE"d"
+#define TEXT_DISABLE "Disable"
+#define TEXT_DISABLED TEXT_DISABLE"d"
 //  Top-Level
 #define TEXT_TL_TITLE "iFixit FixHub Iron Programmer"
 #define TEXT_SER_OPEN "Open Port"
@@ -49,6 +55,7 @@
 #define TEXT_CONFIG_IDLE "Idle"
 #define TEXT_CONFIG_SLEEP "Sleep"
 #define TEXT_COFIG_UNITS "Units"
+#define TEXT_CONFIG_CAL_TEMP "Cal Temp"
 #define TEXT_CONFIG_RESET "Reset"
 #define TEXT_CONFIG_REBOOT "Reboot"
 

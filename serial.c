@@ -74,38 +74,6 @@
 #define CMD_CAL_TEMP_GET "settings get tempcorrection\n"
 #define CMD_CAL_TEMP_GET_LEN CMD_CAL_TEMP_SET_LEN+1
 
-//  Core Readouts
-static GtkWidget* label_state = NULL;
-static GtkWidget* label_liveTemp = NULL;
-static GtkWidget* label_livePower = NULL;
-static GtkWidget* label_liveDutyCycle = NULL;
-//  Setpoints
-static GtkWidget* label_spTemp_curr = NULL;
-static GtkWidget* text_spTemp_new = NULL;
-static GtkWidget* label_maxTemp_curr = NULL;
-static GtkWidget* text_maxTemp_new = NULL;
-//  Auxiliary Readouts
-static GtkWidget* label_uptime = NULL;
-static GtkWidget* label_faults = NULL;
-static GtkWidget* label_version = NULL;
-static GtkWidget* label_sn_device = NULL;
-static GtkWidget* label_sn_mcu = NULL;
-//  Configuration
-static GtkWidget* sw_idleEnable = NULL;
-static GtkWidget* text_idleTimer = NULL;
-static GtkWidget* text_idleTemp = NULL;
-static GtkWidget* sw_sleepEnable = NULL;
-static GtkWidget* text_sleepTimer = NULL;
-static GtkWidget* sw_units = NULL;
-static GtkWidget* text_calTemp = NULL;
-static GtkWidget* label_idleEnable = NULL;
-static GtkWidget* label_idleTimer = NULL;
-static GtkWidget* label_idleTemp = NULL;
-static GtkWidget* label_sleepEnable = NULL;
-static GtkWidget* label_sleepTimer = NULL;
-static GtkWidget* label_units = NULL;
-static GtkWidget* label_calTemp = NULL;
-
 //  Local Type Definitions
 
 //  Local Structures
@@ -159,13 +127,15 @@ void serial_init (const char* portPath)
 	retCode = sp_get_port_by_name (portPath, &port_iron);
 	if (retCode < 0)
 	{
-		printf ("sp_get_port_by_name:  %d\n", retCode);
+		port_iron = NULL;
+		_LOG (1, "sp_get_port_by_name:  %d\n", retCode);
 		return;
 	}
 	retCode = sp_open (port_iron, SP_MODE_READ_WRITE);
 	if (retCode < 0)
 	{
-		printf ("sp_open:  %d\n", retCode);
+		port_iron = NULL;
+		_LOG (1, "sp_open:  %d\n", retCode);
 		return;
 	}
 	//  Configure the Serial Port's settings.
@@ -489,7 +459,11 @@ static inline void priv_heaterDetails_get (void)
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
 	int amount = priv_read_skipEchoBack (buffRead, CMD_HEATER_DETAILS_GET, CMD_HEATER_DETAILS_GET_LEN, &start);
-	if (amount < 0) return;
+	if (amount < 0)
+	{
+		_LOG (1, "No data received!  Returning...\n");
+		return;
+	}
 	_LOG (5, "Heater Details:\n%s\n", start);
 }
 
@@ -498,7 +472,20 @@ static inline void priv_idleEnable_get (void)
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
 	int amount = priv_read_oneliner (buffRead, CMD_IDLE_ENABLE_GET, CMD_IDLE_ENABLE_GET_LEN, &start);
-	if (amount < 0) return;
+	if (amount < 0)
+	{
+		_LOG (1, "No data received!  Returning...\n");
+		return;
+	}
+	else if (_STRING_COMPARE (start, "Enabled\r"))
+		gui_idleEnable_update (1);
+	else if (_STRING_COMPARE (start, "Disabled\r"))
+		gui_idleEnable_update (0);
+	else
+	{
+		_LOG (1, "Bad Idle Enable received!  Returning...\n");
+		return;
+	}
 	_LOG (5, "Idle Enable:  %s\n", start);
 }
 static inline void priv_sleepEnable_get (void)
@@ -506,7 +493,20 @@ static inline void priv_sleepEnable_get (void)
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
 	int amount = priv_read_oneliner (buffRead, CMD_SLEEP_ENABLE_GET, CMD_SLEEP_ENABLE_GET_LEN, &start);
-	if (amount < 0) return;
+	if (amount < 0)
+	{
+		_LOG (1, "No data received!  Returning...\n");
+		return;
+	}
+	else if (_STRING_COMPARE (start, "Enabled\r"))
+		gui_sleepEnable_update (1);
+	else if (_STRING_COMPARE (start, "Disabled\r"))
+		gui_sleepEnable_update (0);
+	else
+	{
+		_LOG (1, "Bad Sleep Enable received!  Returning...\n");
+		return;
+	}
 	_LOG (5, "Sleep Enable:  %s\n", start);
 }
 static inline void priv_units_get (void)
@@ -514,7 +514,20 @@ static inline void priv_units_get (void)
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
 	int amount = priv_read_oneliner (buffRead, CMD_UNITS_GET, CMD_UNITS_GET_LEN, &start);
-	if (amount < 0) return;
+	if (amount < 0)
+	{
+		_LOG (1, "No data received!  Returning...\n");
+		return;
+	}
+	else if (_STRING_COMPARE (start, "C\r"))
+		gui_units_update (1);
+	else if (_STRING_COMPARE (start, "F\r"))
+		gui_units_update (0);
+	else
+	{
+		_LOG (1, "Bad Unit received!  Returning...\n");
+		return;
+	}
 	_LOG (5, "Units:  %s\n", start);
 }
 

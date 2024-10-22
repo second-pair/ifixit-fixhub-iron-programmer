@@ -47,6 +47,7 @@
 
 //  Global Prototype Functions
 void cb_app_main_activate (GtkApplication* theApp, gpointer data);
+void gui_btnPort_forceState (uint8_t openNClosed);
 void gui_spTemp_update (uint16_t newValue);
 void gui_maxTemp_update (uint16_t newValue);
 void gui_idleEnable_update (uint16_t newValue);

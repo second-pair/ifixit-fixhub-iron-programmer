@@ -29,6 +29,7 @@
 
 //  Local Global Variables
 static GtkWidget* text_ser_port = NULL;
+static GtkWidget* btn_ser_connect = NULL;
 //  Serial
 //  Core Readouts
 static GtkWidget* label_state = NULL;
@@ -149,7 +150,7 @@ static GtkWidget* priv_ser_create (void)
 	GtkEntryBuffer* buffer_ser_port = gtk_entry_buffer_new (GUI_PORT_DEFAULT, -1);
 	text_ser_port = gtk_text_new_with_buffer (buffer_ser_port);
 	gtk_box_append (GTK_BOX (box_serial), text_ser_port);
-	GtkWidget* btn_ser_connect = gtk_button_new_with_label (TEXT_SER_OPEN);
+	btn_ser_connect = gtk_button_new_with_label (TEXT_SER_OPEN);
 	g_signal_connect (btn_ser_connect, "clicked", G_CALLBACK (cb_btn_ser_connect_clicked), NULL);
 	gtk_box_append (GTK_BOX (box_serial), btn_ser_connect);
 	return box_serial;
@@ -403,6 +404,11 @@ void cb_app_main_activate (GtkApplication* theApp, gpointer data)
 	gtk_window_present (GTK_WINDOW (window_main));
 }
 
+void gui_btnPort_forceState (uint8_t openNClosed)
+{
+	gtk_button_set_label (GTK_BUTTON (btn_ser_connect), openNClosed ? TEXT_SER_CLOSE : TEXT_SER_OPEN);
+}
+
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 {
 	//  Toggle open-ness of the Serial port.
@@ -423,11 +429,11 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 
 static void cb_btn_reset_clicked (GtkButton* theButton, gpointer data)
 {
-	_LOG (0, "Here.\n");
+	serial_cmd_noParams_submit (ironCmdType_reset);
 }
 static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 {
-	_LOG (0, "Here.\n");
+	serial_cmd_noParams_submit (ironCmdType_reboot);
 }
 
 //  Helper functions for the Setter Buttons

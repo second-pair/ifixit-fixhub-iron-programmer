@@ -18,6 +18,7 @@
 
 //  Includes
 #include "serial.h"
+#include "libserialport/libserialport.h"
 
 //  Defines
 #define WAIT_COUNT 100
@@ -25,54 +26,63 @@
 #define THREAD_SLEEP_MS 1
 #define THREAD_QUEUE_WAIT_MS 1
 
+//  Serial port config.
 #define PORT_BAUD 115200
 #define PORT_BITS_DATA 8
 #define PORT_PARITY SP_PARITY_NONE
 #define PORT_BITS_STOP 0
 #define PORT_FLOW_CONTROL SP_FLOWCONTROL_NONE
 
+//  Command strings.
+//  Setter functions.
+#define CMD_SP_TEMP_SET "settings set activetemp"
+#define CMD_SP_TEMP_SET_LEN 23
+#define CMD_MAX_TEMP_SET "settings set maxtemp"
+#define CMD_MAX_TEMP_SET_LEN 20
+#define CMD_IDLE_ENABLE_SET "settings set idletimerenable"
+#define CMD_IDLE_ENABLE_SET_LEN 28
+#define CMD_IDLE_TIMER_SET "settings set idletimer"
+#define CMD_IDLE_TIMER_SET_LEN 22
+#define CMD_IDLE_TEMP_SET "settings set idletemp"
+#define CMD_IDLE_TEMP_SET_LEN 21
+#define CMD_SLEEP_ENABLE_SET "settings set sleeptimerenable"
+#define CMD_SLEEP_ENABLE_SET_LEN 29
+#define CMD_SLEEP_TIMER_SET "settings set sleeptimer"
+#define CMD_SLEEP_TIMER_SET_LEN 23
+#define CMD_UNITS_SET "settings set units"
+#define CMD_UNITS_SET_LEN 18
+#define CMD_CAL_TEMP_SET "settings set tempcorrection"
+#define CMD_CAL_TEMP_SET_LEN 27
+//  Getter functions.
 #define CMD_VERSION_GET "version\n"
 #define CMD_VERSION_GET_LEN 8
 #define CMD_HEATER_DETAILS_GET "heater details\n"
 #define CMD_HEATER_DETAILS_GET_LEN 15
 #define CMD_HEATER_DETAILS_GET "heater details\n"
 #define CMD_HEATER_DETAILS_GET_LEN 15
-#define CMD_SP_TEMP_SET "settings set activetemp"
-#define CMD_SP_TEMP_SET_LEN 23
 #define CMD_SP_TEMP_GET "settings get activetemp\n"
 #define CMD_SP_TEMP_GET_LEN CMD_SP_TEMP_SET_LEN+1
-#define CMD_MAX_TEMP_SET "settings set maxtemp"
-#define CMD_MAX_TEMP_SET_LEN 20
 #define CMD_MAX_TEMP_GET "settings get maxtemp\n"
 #define CMD_MAX_TEMP_GET_LEN CMD_MAX_TEMP_SET_LEN+1
-#define CMD_IDLE_ENABLE_SET "settings set idletimerenable"
-#define CMD_IDLE_ENABLE_SET_LEN 28
 #define CMD_IDLE_ENABLE_GET "settings get idletimerenable\n"
 #define CMD_IDLE_ENABLE_GET_LEN CMD_IDLE_ENABLE_SET_LEN+1
-#define CMD_IDLE_TIMER_SET "settings set idletimer"
-#define CMD_IDLE_TIMER_SET_LEN 22
 #define CMD_IDLE_TIMER_GET "settings get idletimer\n"
 #define CMD_IDLE_TIMER_GET_LEN CMD_IDLE_TIMER_SET_LEN+1
-#define CMD_IDLE_TEMP_SET "settings set idletemp"
-#define CMD_IDLE_TEMP_SET_LEN 21
 #define CMD_IDLE_TEMP_GET "settings get idletemp\n"
 #define CMD_IDLE_TEMP_GET_LEN CMD_IDLE_TEMP_SET_LEN+1
-#define CMD_SLEEP_ENABLE_SET "settings set sleeptimerenable"
-#define CMD_SLEEP_ENABLE_SET_LEN 29
 #define CMD_SLEEP_ENABLE_GET "settings get sleeptimerenable\n"
 #define CMD_SLEEP_ENABLE_GET_LEN CMD_SLEEP_ENABLE_SET_LEN+1
-#define CMD_SLEEP_TIMER_SET "settings set sleeptimer"
-#define CMD_SLEEP_TIMER_SET_LEN 23
 #define CMD_SLEEP_TIMER_GET "settings get sleeptimer\n"
 #define CMD_SLEEP_TIMER_GET_LEN CMD_SLEEP_TIMER_SET_LEN+1
-#define CMD_UNITS_SET "settings set units"
-#define CMD_UNITS_SET_LEN 18
 #define CMD_UNITS_GET "settings get units\n"
 #define CMD_UNITS_GET_LEN CMD_UNITS_SET_LEN+1
-#define CMD_CAL_TEMP_SET "settings set tempcorrection"
-#define CMD_CAL_TEMP_SET_LEN 27
 #define CMD_CAL_TEMP_GET "settings get tempcorrection\n"
 #define CMD_CAL_TEMP_GET_LEN CMD_CAL_TEMP_SET_LEN+1
+//  Operation command functions.
+//#define CMD_RESET "reset\n"
+//#define CMD_RESET_LEN "6"
+#define CMD_REBOOT "reset\n"
+#define CMD_REBOOT_LEN 6
 
 //  Local Type Definitions
 
@@ -97,6 +107,7 @@ static inline void priv_waitInComplete (void);
 static inline void priv_serCmd_despatch (ironCommand* ironCmd);
 static void priv_serRoutine_next (void);
 
+//  Getter functions.
 static inline void priv_version_get (void);
 static inline void priv_heaterDetails_get (void);
 static inline void priv_spTemp_get (void);
@@ -108,9 +119,12 @@ static inline void priv_sleepEnable_get (void);
 static inline void priv_sleepTimer_get (void);
 static inline void priv_units_get (void);
 static inline void priv_calTemp_get (void);
-
+//  Setter functions.
 static inline void priv_spTemp_set (ironCommand* ironCmd);
 static inline void priv_maxTemp_set (ironCommand* ironCmd);
+//  Operation command functions.
+static inline void priv_reset (void);
+static inline void priv_reboot (uint8_t restore);
 //  ...  of Which are Callbacks
 void* thread_serial_run (void* args);
 
@@ -120,6 +134,7 @@ void* thread_serial_run (void* args);
 
 //  *--<Public Code>--*  //
 
+//#  Check if the iron's name is "iFixit Iron DFU" and put it back into normal mode if it is.  This, btw, is probably how we would do firmware updates etc.
 void serial_init (const char* portPath)
 {
 	//  Open the Serial port.
@@ -152,6 +167,10 @@ void serial_init (const char* portPath)
 	//  Set up the queue.
 	priv_cmdQueue = g_async_queue_new ();
 
+	//  Flush the input buffer.
+	priv_waitInComplete ();
+	sp_flush (port_iron, SP_BUF_INPUT);
+
 	//  Create the command-handling thread.
 	thread_run = 1;
 	pthread_create (&thread_serial, NULL, thread_serial_run	, NULL);
@@ -162,6 +181,7 @@ void serial_close (void)
 	//  Close the port & set it to NULL.
 	_NULL_RETURN_VOID (port_iron);
 	sp_close (port_iron);
+	sp_free_port (port_iron);
 	port_iron = NULL;
 	//  Clean up the Serial Command queue.
 	_NULL_RETURN_VOID (priv_cmdQueue);
@@ -330,6 +350,7 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 {
 	switch (ironCmd -> type)
 	{
+		//  Getter functions.
 		case ironCmdType_version_get:
 			priv_version_get ();
 			break;
@@ -360,6 +381,7 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 		case ironCmdType_units_get:
 			priv_units_get ();
 			break;
+			//  Setter functions.
 		case ironCmdType_calTemp_get:
 			priv_calTemp_get ();
 			break;
@@ -368,6 +390,13 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 			break;
 		case ironCmdType_maxTemp_set:
 			priv_maxTemp_set (ironCmd);
+			break;
+			//  Operation command functions.
+		case ironCmdType_reset:
+			priv_reset ();
+			break;
+		case ironCmdType_reboot:
+			priv_reboot (SERIAL_RESET_RESTORE);
 			break;
 		default:
 			break;
@@ -545,6 +574,33 @@ static inline void priv_maxTemp_set (ironCommand* ironCmd)
 	int amount = priv_send_params (CMD_MAX_TEMP_SET, CMD_MAX_TEMP_SET_LEN, ironCmd -> params);
 	if (amount < 0) return;
 	priv_maxTemp_get ();
+}
+
+//  Operation command functions.
+static inline void priv_reset (void)
+{
+	_LOG (1, "Reset not yet implemented.\n");
+}
+static inline void priv_reboot (uint8_t restore)
+{
+	_LOG (1, "Performing Iron reboot sequence.\n");
+	//  I'll implement a one-off custom for this, as the iron should reset once this has been sent.
+	_NULL_RETURN_VOID (port_iron);
+	//  Retrieve the port path for re-opening later.
+	const char* _portPath = sp_get_port_name (port_iron);
+	char portPath [SERIAL_PORT_PATH_LEN];
+	snprintf (portPath, SERIAL_PORT_PATH_LEN, "%s", _portPath);
+	//  Write the reset command.
+	sp_nonblocking_write (port_iron, CMD_REBOOT, CMD_REBOOT_LEN);
+	//  Close the port.
+	serial_close ();
+	//  Wait for a wee bit.
+	_SLEEP_MS (SERIAL_RESET_DELAY_MS);
+	//  Re-open it.
+	if (restore)
+		serial_init (portPath);
+	else
+		gui_btnPort_forceState (0);
 }
 
 

@@ -451,7 +451,14 @@ static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%d", newSp); \
 	serial_cmd_submit (ironCmd); \
 })
-#define sw_cmdSubmit() 0
+#define sw_cmdSubmit_boolText(cmd, state, textOff, textOn) \
+({ \
+	ironCommand* ironCmd = malloc (sizeof (ironCommand)); \
+	_NULL_EXIT (ironCmd); \
+	ironCmd -> type = cmd; \
+	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%s", state ? textOn : textOff); \
+	serial_cmd_submit (ironCmd); \
+})
 
 //  Setter Buttons
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
@@ -466,21 +473,20 @@ static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data)
 }
 static void cb_btn_idle_clicked (GtkButton* theButton, gpointer data)
 {
-	_LOG (0, "Here.\n");
+	sw_cmdSubmit_boolText (ironCmdType_idleEnable_set,
+		gtk_switch_get_state (GTK_SWITCH (sw_idleEnable_new)), "0", "1");
+	text_cmdSubmit_number (ironCmdType_idleTimer_set, text_idleTimer_new, uint16_t, 0, UINT16_MAX);
+	text_cmdSubmit_number (ironCmdType_idleTemp_set, text_idleTemp_new, uint16_t, 0, UINT16_MAX);
 }
 static void cb_btn_sleep_clicked (GtkButton* theButton, gpointer data)
 {
-	_LOG (0, "Here.\n");
+	sw_cmdSubmit_boolText (ironCmdType_sleepEnable_set,
+		gtk_switch_get_state (GTK_SWITCH (sw_sleepEnable_new)), "0", "1");
+	text_cmdSubmit_number (ironCmdType_sleepTimer_set, text_sleepTimer_new, uint16_t, 0, UINT16_MAX);
 }
 static void cb_sw_units_stateSet (GtkSwitch* theSwitch, gboolean state, gpointer data)
 {
-	/*ironCommand* ironCmd = malloc (sizeof (ironCommand));
-	_NULL_EXIT (ironCmd);
-	ironCmd -> type = ironCmdType_units_set;
-	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%s", state ? "C" : "F");
-	serial_cmd_submit (ironCmd);*/
-
-	_LOG (0, "Here:  %u\n", state);
+	sw_cmdSubmit_boolText (ironCmdType_units_set, state, "F", "C");
 	gtk_switch_set_state (GTK_SWITCH (theSwitch), state);
 }
 static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data)

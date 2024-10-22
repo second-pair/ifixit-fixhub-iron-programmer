@@ -376,7 +376,7 @@ void gui_sleepTimer_update (uint16_t newValue)
 	{  gui_update (cb_sleepTimer_update_to, newValue, "Sleep Timer");  }
 void gui_units_update (uint16_t newValue)
 	{  gui_update (cb_units_update_to, newValue, "Units");  }
-void gui_calTemp_update (uint16_t newValue)
+void gui_calTemp_update (int16_t newValue)
 	{  gui_update (cb_calTemp_update_to, newValue, "Calibration Temp");  }
 
 
@@ -448,7 +448,7 @@ static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 	ironCommand* ironCmd = malloc (sizeof (ironCommand)); \
 	_NULL_EXIT (ironCmd); \
 	ironCmd -> type = cmdType; \
-	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%u", newSp); \
+	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%d", newSp); \
 	serial_cmd_submit (ironCmd); \
 })
 #define sw_cmdSubmit() 0
@@ -457,12 +457,12 @@ static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 {
 	text_cmdSubmit_number (ironCmdType_spTemp_set, text_spTemp_new,
-		uint16_t, INT16_MIN, INT16_MAX);
+		uint16_t, 0, UINT16_MAX);
 }
 static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data)
 {
 	text_cmdSubmit_number (ironCmdType_maxTemp_set, text_maxTemp_new,
-		uint16_t, INT16_MIN, INT16_MAX);
+		uint16_t, 0, UINT16_MAX);
 }
 static void cb_btn_idle_clicked (GtkButton* theButton, gpointer data)
 {
@@ -485,7 +485,8 @@ static void cb_sw_units_stateSet (GtkSwitch* theSwitch, gboolean state, gpointer
 }
 static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data)
 {
-	_LOG (0, "Here.\n");
+	text_cmdSubmit_number (ironCmdType_calTemp_set, text_calTemp_new,
+		int16_t, INT16_MIN, INT16_MAX);
 }
 
 
@@ -493,7 +494,7 @@ static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data)
 #define label_update_number(theLabel, theNumber, numType) \
 ({ \
 	char updateText [LABEL_LEN_NUMBER]; \
-	snprintf (updateText, LABEL_LEN_NUMBER, "%u", (numType)(uintptr_t)theNumber); \
+	snprintf (updateText, LABEL_LEN_NUMBER, "%d", (numType)(uintptr_t)theNumber); \
 	gtk_label_set_text (GTK_LABEL (theLabel), updateText); \
 	return 0; \
 })
@@ -526,7 +527,7 @@ static gboolean cb_idleTemp_update_to (gpointer data)
 static gboolean cb_sleepTimer_update_to (gpointer data)
 	{  label_update_number (label_sleepTimer_curr, data, uint16_t);  }
 static gboolean cb_calTemp_update_to (gpointer data)
-	{  label_update_number (label_calTemp_curr, data, uint16_t);  }
+	{  label_update_number (label_calTemp_curr, data, int16_t);  }
 
 static gboolean cb_idleEnable_update_to (gpointer eND)
 	{  label_update_boolText (label_idleEnable_curr, eND, TEXT_DISABLED, TEXT_ENABLED);  }

@@ -101,6 +101,7 @@ static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t len
 static inline int priv_read_skipEchoBack (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
 static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
 static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length);
+static inline uint16_t priv_read_uint16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length);
 static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, const char* params);
 static inline void priv_waitInStart (void);
 static inline void priv_waitInComplete (void);
@@ -293,19 +294,34 @@ static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmdStr, uin
 	return amount;
 }
 
-//  `priv_read_oneliner ()`, but parses the remaining line into an 'int16_t'.
+//  `priv_read_oneliner ()`, but parses the remaining line into the associated type.
 static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length)
 {
 	//  Perform a one-liner read and check for errors.
 	uint8_t* start;
 	int amount = priv_read_oneliner (buffRead, cmdStr, length, &start);
-	if (amount < 0) return INT16_MAX;
+	if (amount < 0)
+		return INT16_MAX;
 	//  Decode the response.
 	int decode = strtol ((char*)start, NULL, 10);
 	if (decode > INT16_MAX) decode = INT16_MAX;
 	if (decode < INT16_MIN) decode = INT16_MIN;
 	//  Return it.
-	return decode;
+	return (int16_t)decode;
+}
+static inline uint16_t priv_read_uint16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length)
+{
+	//  Perform a one-liner read and check for errors.
+	uint8_t* start;
+	int amount = priv_read_oneliner (buffRead, cmdStr, length, &start);
+	if (amount < 0)
+		return UINT16_MAX;
+	//  Decode the response.
+	int decode = strtol ((char*)start, NULL, 10);
+	if (decode > UINT16_MAX) decode = UINT16_MAX;
+	if (decode < 0) decode = 0;
+	//  Return it.
+	return (uint16_t)decode;
 }
 
 static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, const char* params)
@@ -481,26 +497,26 @@ static void priv_serRoutine_next (void)
 
 //  Getter functions.
 
-#define priv_get_u16(nameLower, nameUpper) \
+#define priv_get(nameLower, nameUpper, type, maxBound) \
 ({ \
 	uint8_t buffRead [SERIAL_BUFF_SIZE]; \
-	int16_t number = priv_read_int16_t (buffRead, CMD_##nameUpper##_GET, CMD_##nameUpper##_GET_LEN); \
-	_VALUE_IS_RETURN_VOID (number, INT16_MAX); \
+	type number = priv_read_##type (buffRead, CMD_##nameUpper##_GET, CMD_##nameUpper##_GET_LEN); \
+	_VALUE_IS_RETURN_VOID (number, maxBound); \
 	gui_##nameLower##_update (number); \
 })
 
 static inline void priv_spTemp_get (void)
-	{  priv_get_u16 (spTemp, SP_TEMP);  }
+	{  priv_get (spTemp, SP_TEMP, uint16_t, UINT16_MAX);  }
 static inline void priv_maxTemp_get (void)
-	{  priv_get_u16 (maxTemp, MAX_TEMP);  }
+	{  priv_get (maxTemp, MAX_TEMP, uint16_t, UINT16_MAX);  }
 static inline void priv_idleTimer_get (void)
-	{  priv_get_u16 (idleTimer, IDLE_TIMER);  }
+	{  priv_get (idleTimer, IDLE_TIMER, uint16_t, UINT16_MAX);  }
 static inline void priv_idleTemp_get (void)
-	{  priv_get_u16 (idleTemp, IDLE_TEMP);  }
+	{  priv_get (idleTemp, IDLE_TEMP, uint16_t, UINT16_MAX);  }
 static inline void priv_sleepTimer_get (void)
-	{  priv_get_u16 (sleepTimer, SLEEP_TIMER);  }
+	{  priv_get (sleepTimer, SLEEP_TIMER, uint16_t, UINT16_MAX);  }
 static inline void priv_calTemp_get (void)
-	{  priv_get_u16 (calTemp, CAL_TEMP);  }
+	{  priv_get (calTemp, CAL_TEMP, int16_t, INT16_MAX);  }
 
 static inline void priv_version_get (void)
 {

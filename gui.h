@@ -56,7 +56,7 @@ void gui_idleTemp_update (uint16_t newValue);
 void gui_sleepEnable_update (uint16_t newValue);
 void gui_sleepTimer_update (uint16_t newValue);
 void gui_units_update (uint16_t newValue);
-void gui_calTemp_update (uint16_t newValue);
+void gui_calTemp_update (int16_t newValue);
 
 //  *--</Definitions>--*  //
 

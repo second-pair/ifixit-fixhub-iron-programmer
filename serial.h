@@ -29,15 +29,23 @@
 #define SERIAL_BUFF_SIZE 1024
 #define SERIAL_CMD_SIZE 64
 #define SERIAL_PARAM_SIZE 32
-#define SERIAL_IRON_GET_TYPE_MAX 3
+#define SERIAL_IRON_GET_TYPE_MAX 11
 
 //  Global Type Definitions
 
 //  Global Enumerations
 typedef enum ironCommandType
 {
-	ironCmdType_version_get, ironCmdType_spTemp_get, ironCmdType_maxTemp_get,
+	ironCmdType_version_get, ironCmdType_heaterDetails_get,
+	ironCmdType_spTemp_get, ironCmdType_maxTemp_get,
+	ironCmdType_idleEnable_get, ironCmdType_idleTimer_get, ironCmdType_idleTemp_get,
+	ironCmdType_sleepEnable_get, ironCmdType_sleepTimer_get,
+	ironCmdType_units_get, ironCmdType_calTemp_get,
+	//reboot,
 	ironCmdType_spTemp_set, ironCmdType_maxTemp_set
+	/*idleEnable, idleTimer, idleTemp,
+	sleepEnable, sleepTimer,
+	units, calTemp,*/
 } ironCommandType;
 
 //  Global Structures

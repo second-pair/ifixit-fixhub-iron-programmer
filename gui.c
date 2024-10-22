@@ -47,20 +47,20 @@ static GtkWidget* label_version = NULL;
 static GtkWidget* label_sn_device = NULL;
 static GtkWidget* label_sn_mcu = NULL;
 //  Configuration
-static GtkWidget* sw_idleEnable = NULL;
-static GtkWidget* text_idleTimer = NULL;
-static GtkWidget* text_idleTemp = NULL;
-static GtkWidget* sw_sleepEnable = NULL;
-static GtkWidget* text_sleepTimer = NULL;
-static GtkWidget* sw_units = NULL;
-static GtkWidget* text_calTemp = NULL;
-static GtkWidget* label_idleEnable = NULL;
-static GtkWidget* label_idleTimer = NULL;
-static GtkWidget* label_idleTemp = NULL;
-static GtkWidget* label_sleepEnable = NULL;
-static GtkWidget* label_sleepTimer = NULL;
-static GtkWidget* label_units = NULL;
-static GtkWidget* label_calTemp = NULL;
+static GtkWidget* sw_idleEnable_new = NULL;
+static GtkWidget* text_idleTimer_new = NULL;
+static GtkWidget* text_idleTemp_new = NULL;
+static GtkWidget* sw_sleepEnable_new = NULL;
+static GtkWidget* text_sleepTimer_new = NULL;
+static GtkWidget* sw_units_new = NULL;
+static GtkWidget* text_calTemp_new = NULL;
+static GtkWidget* label_idleEnable_curr = NULL;
+static GtkWidget* label_idleTimer_curr = NULL;
+static GtkWidget* label_idleTemp_curr = NULL;
+static GtkWidget* label_sleepEnable_curr = NULL;
+static GtkWidget* label_sleepTimer_curr = NULL;
+static GtkWidget* label_units_curr = NULL;
+static GtkWidget* label_calTemp_curr = NULL;
 
 //  Truly Global Variables
 
@@ -87,13 +87,13 @@ static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data);
 
 static gboolean cb_spTemp_update_to (gpointer data);
 static gboolean cb_maxTemp_update_to (gpointer data);
-//static gboolean cb_idleEnable_update_to (gpointer data);
-//static gboolean cb_idleTimer_update_to (gpointer data);
-//static gboolean cb_idleTemp_update_to (gpointer data);
-//static gboolean cb_sleepEnable_update_to (gpointer data);
-//static gboolean cb_sleepTimer_update_to (gpointer data);
-//static gboolean cb_units_update_to (gpointer data);
-//static gboolean cb_calTemp_update_to (gpointer data);
+static gboolean cb_idleEnable_update_to (gpointer data);
+static gboolean cb_idleTimer_update_to (gpointer data);
+static gboolean cb_idleTemp_update_to (gpointer data);
+static gboolean cb_sleepEnable_update_to (gpointer data);
+static gboolean cb_sleepTimer_update_to (gpointer data);
+static gboolean cb_units_update_to (gpointer data);
+static gboolean cb_calTemp_update_to (gpointer data);
 
 //  *--</Preparations>--*  //
 
@@ -277,37 +277,37 @@ static GtkWidget* priv_config_create (void)
 
 	//  Idle Timer
 	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_IDLE), 0, rp, 1, 1);
-	label_idleEnable = gtk_label_new ("<idleEnable>");
-	gtk_grid_attach (GTK_GRID (grid_config), label_idleEnable, 1, rp, 1, 1);
-	sw_idleEnable = gtk_switch_new ();
-	gtk_switch_set_state (GTK_SWITCH (sw_idleEnable), GUI_IDLE_ENABLE_DEFAULT);
-	gtk_grid_attach (GTK_GRID (grid_config), sw_idleEnable, 2, rp, 1, 1);
-	label_idleTimer = gtk_label_new ("<idleTimer>");
-	gtk_grid_attach (GTK_GRID (grid_config), label_idleTimer, 3, rp, 1, 1);
-	GtkEntryBuffer* buffer_idleTimer = gtk_entry_buffer_new (GUI_IDLE_TIMER_DEFAULT, -1);
-	text_idleTimer = gtk_text_new_with_buffer (buffer_idleTimer);
-	gtk_grid_attach (GTK_GRID (grid_config), text_idleTimer, 4, rp, 1, 1);
-	label_idleTemp = gtk_label_new ("<idleTemp>");
-	gtk_grid_attach (GTK_GRID (grid_config), label_idleTemp, 5, rp, 1, 1);
-	GtkEntryBuffer* buffer_idleTemp = gtk_entry_buffer_new (GUI_IDLE_TEMP_DEFAULT, -1);
-	text_idleTemp = gtk_text_new_with_buffer (buffer_idleTemp);
-	gtk_grid_attach (GTK_GRID (grid_config), text_idleTemp, 6, rp, 1, 1);
+	label_idleEnable_curr = gtk_label_new ("<idleEnable>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_idleEnable_curr, 1, rp, 1, 1);
+	sw_idleEnable_new = gtk_switch_new ();
+	gtk_switch_set_state (GTK_SWITCH (sw_idleEnable_new), GUI_IDLE_ENABLE_DEFAULT);
+	gtk_grid_attach (GTK_GRID (grid_config), sw_idleEnable_new, 2, rp, 1, 1);
+	label_idleTimer_curr = gtk_label_new ("<idleTimer>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_idleTimer_curr, 3, rp, 1, 1);
+	GtkEntryBuffer* buffer_idleTimer_new = gtk_entry_buffer_new (GUI_IDLE_TIMER_DEFAULT, -1);
+	text_idleTimer_new = gtk_text_new_with_buffer (buffer_idleTimer_new);
+	gtk_grid_attach (GTK_GRID (grid_config), text_idleTimer_new, 4, rp, 1, 1);
+	label_idleTemp_curr = gtk_label_new ("<idleTemp>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_idleTemp_curr, 5, rp, 1, 1);
+	GtkEntryBuffer* buffer_idleTemp_new = gtk_entry_buffer_new (GUI_IDLE_TEMP_DEFAULT, -1);
+	text_idleTemp_new = gtk_text_new_with_buffer (buffer_idleTemp_new);
+	gtk_grid_attach (GTK_GRID (grid_config), text_idleTemp_new, 6, rp, 1, 1);
 	GtkWidget* btn_idle = gtk_button_new_with_label (TEXT_SET);
 	gtk_grid_attach (GTK_GRID (grid_config), btn_idle, 7, rp++, 1, 1);
 	g_signal_connect (btn_idle, "clicked", G_CALLBACK (cb_btn_idle_clicked), NULL);
 
 	//  Sleep Timer
 	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_SLEEP), 0, rp, 1, 1);
-	label_sleepEnable = gtk_label_new ("<sleepEnable>");
-	gtk_grid_attach (GTK_GRID (grid_config), label_sleepEnable, 1, rp, 1, 1);
-	sw_sleepEnable = gtk_switch_new ();
-	gtk_switch_set_state (GTK_SWITCH (sw_sleepEnable), GUI_SLEEP_ENABLE_DEFAULT);
-	gtk_grid_attach (GTK_GRID (grid_config), sw_sleepEnable, 2, rp, 1, 1);
-	label_sleepTimer = gtk_label_new ("<sleepTimer>");
-	gtk_grid_attach (GTK_GRID (grid_config), label_sleepTimer, 3, rp, 1, 1);
-	GtkEntryBuffer* buffer_sleepTimer = gtk_entry_buffer_new (GUI_SLEEP_ENABLE_TIMER, -1);
-	text_sleepTimer = gtk_text_new_with_buffer (buffer_sleepTimer);
-	gtk_grid_attach (GTK_GRID (grid_config), text_sleepTimer, 4, rp, 1, 1);
+	label_sleepEnable_curr = gtk_label_new ("<sleepEnable>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_sleepEnable_curr, 1, rp, 1, 1);
+	sw_sleepEnable_new = gtk_switch_new ();
+	gtk_switch_set_state (GTK_SWITCH (sw_sleepEnable_new), GUI_SLEEP_ENABLE_DEFAULT);
+	gtk_grid_attach (GTK_GRID (grid_config), sw_sleepEnable_new, 2, rp, 1, 1);
+	label_sleepTimer_curr = gtk_label_new ("<sleepTimer>");
+	gtk_grid_attach (GTK_GRID (grid_config), label_sleepTimer_curr, 3, rp, 1, 1);
+	GtkEntryBuffer* buffer_sleepTimer_new = gtk_entry_buffer_new (GUI_SLEEP_ENABLE_TIMER, -1);
+	text_sleepTimer_new = gtk_text_new_with_buffer (buffer_sleepTimer_new);
+	gtk_grid_attach (GTK_GRID (grid_config), text_sleepTimer_new, 4, rp, 1, 1);
 	GtkWidget* btn_sleep = gtk_button_new_with_label (TEXT_SET);
 	gtk_grid_attach (GTK_GRID (grid_config), btn_sleep, 5, rp++, 1, 1);
 	g_signal_connect (btn_sleep, "clicked", G_CALLBACK (cb_btn_sleep_clicked), NULL);
@@ -316,21 +316,21 @@ static GtkWidget* priv_config_create (void)
 	GtkWidget* box_units = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_box_set_homogeneous (GTK_BOX (box_units), 1);
 	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_COFIG_UNITS));
-	label_units = gtk_label_new ("<celsius>");
-	gtk_box_append (GTK_BOX (box_units), label_units);
+	label_units_curr = gtk_label_new ("<celsius>");
+	gtk_box_append (GTK_BOX (box_units), label_units_curr);
 	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_UNIT_TEMP_F));
-	sw_units = gtk_switch_new ();
-	gtk_switch_set_state (GTK_SWITCH (sw_units), GUI_UNIT_CELSIUS_DEFAULT);
-	gtk_box_append (GTK_BOX (box_units), sw_units);
+	sw_units_new = gtk_switch_new ();
+	gtk_switch_set_state (GTK_SWITCH (sw_units_new), GUI_UNIT_CELSIUS_DEFAULT);
+	gtk_box_append (GTK_BOX (box_units), sw_units_new);
 	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_UNIT_TEMP_C));
 	gtk_grid_attach (GTK_GRID (grid_config), box_units, 0, rp++, 5, 1);
 
 	//  Calibration Temperature
-	label_calTemp = gtk_label_new ("<+0"TEXT_UNIT_TEMP_C">");
-	gtk_grid_attach (GTK_GRID (grid_config), label_calTemp, 2, rp, 1, 1);
-	GtkEntryBuffer* buffer_calTemp = gtk_entry_buffer_new (GUI_CAL_TEMP_DEFAULT, -1);
-	text_calTemp = gtk_text_new_with_buffer (buffer_calTemp);
-	gtk_grid_attach (GTK_GRID (grid_config), text_calTemp, 3, rp, 1, 1);
+	label_calTemp_curr = gtk_label_new ("<+0"TEXT_UNIT_TEMP_C">");
+	gtk_grid_attach (GTK_GRID (grid_config), label_calTemp_curr, 2, rp, 1, 1);
+	GtkEntryBuffer* buffer_calTemp_new = gtk_entry_buffer_new (GUI_CAL_TEMP_DEFAULT, -1);
+	text_calTemp_new = gtk_text_new_with_buffer (buffer_calTemp_new);
+	gtk_grid_attach (GTK_GRID (grid_config), text_calTemp_new, 3, rp, 1, 1);
 	GtkWidget* btn_calTemp = gtk_button_new_with_label (TEXT_SET);
 	gtk_grid_attach (GTK_GRID (grid_config), btn_calTemp, 4, rp++, 1, 1);
 	g_signal_connect (btn_calTemp, "clicked", G_CALLBACK (cb_btn_calTemp_clicked), NULL);
@@ -348,16 +348,29 @@ static GtkWidget* priv_config_create (void)
 
 
 //  Update API
+#define gui_update(callback, value, logMsg) \
+({ \
+	_LOG (4, #logMsg":  %u\n", value); \
+	g_idle_add_full (G_PRIORITY_LOW, callback, (gpointer)(uintptr_t)value, NULL); \
+})
 void gui_spTemp_update (uint16_t newValue)
-{
-	_LOG (4, "SP Temp:  %u\n", newValue);
-	g_idle_add_full (G_PRIORITY_LOW, cb_spTemp_update_to, (gpointer)(uintptr_t)newValue, NULL);
-}
+	{  gui_update (cb_spTemp_update_to, newValue, "SP Temp");  }
 void gui_maxTemp_update (uint16_t newValue)
-{
-	_LOG (4, "Max Temp:  %u\n", newValue);
-	g_idle_add_full (G_PRIORITY_LOW, cb_maxTemp_update_to, (gpointer)(uintptr_t)newValue, NULL);
-}
+	{  gui_update (cb_maxTemp_update_to, newValue, "Max Temp");  }
+void gui_idleEnable_update (uint16_t newValue)
+	{  gui_update (cb_idleEnable_update_to, newValue, "Idle Enable");  }
+void gui_idleTimer_update (uint16_t newValue)
+	{  gui_update (cb_idleTimer_update_to, newValue, "Idle Timer");  }
+void gui_idleTemp_update (uint16_t newValue)
+	{  gui_update (cb_idleTemp_update_to, newValue, "Idle Temp");  }
+void gui_sleepEnable_update (uint16_t newValue)
+	{  gui_update (cb_sleepEnable_update_to, newValue, "Sleep Enable");  }
+void gui_sleepTimer_update (uint16_t newValue)
+	{  gui_update (cb_sleepTimer_update_to, newValue, "Sleep Timer");  }
+void gui_units_update (uint16_t newValue)
+	{  gui_update (cb_units_update_to, newValue, "Units");  }
+void gui_calTemp_update (uint16_t newValue)
+	{  gui_update (cb_calTemp_update_to, newValue, "Calibration Temp");  }
 
 
 //  *--</Main Code>--*  //
@@ -466,5 +479,19 @@ static gboolean cb_spTemp_update_to (gpointer data)
 	{  label_update (label_spTemp_curr, data, uint16_t);  }
 static gboolean cb_maxTemp_update_to (gpointer data)
 	{  label_update (label_maxTemp_curr, data, uint16_t);  }
+static gboolean cb_idleEnable_update_to (gpointer data)
+	{  label_update (label_idleEnable_curr, data, uint16_t);  }
+static gboolean cb_idleTimer_update_to (gpointer data)
+	{  label_update (label_idleTimer_curr, data, uint16_t);  }
+static gboolean cb_idleTemp_update_to (gpointer data)
+	{  label_update (label_idleTemp_curr, data, uint16_t);  }
+static gboolean cb_sleepEnable_update_to (gpointer data)
+	{  label_update (label_sleepEnable_curr, data, uint16_t);  }
+static gboolean cb_sleepTimer_update_to (gpointer data)
+	{  label_update (label_sleepTimer_curr, data, uint16_t);  }
+static gboolean cb_units_update_to (gpointer data)
+	{  label_update (label_units_curr, data, uint16_t);  }
+static gboolean cb_calTemp_update_to (gpointer data)
+	{  label_update (label_calTemp_curr, data, uint16_t);  }
 
 //  *--</Callbacks>--*  //

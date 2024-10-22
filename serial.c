@@ -33,16 +33,78 @@
 
 #define CMD_VERSION_GET "version\n"
 #define CMD_VERSION_GET_LEN 8
-#define CMD_SP_TEMP_GET "settings get activetemp\n"
-#define CMD_SP_TEMP_GET_LEN 24
-#define CMD_SP_TEMP_SET "settings set activetemp"
-#define CMD_SP_TEMP_SET_LEN 23
-#define CMD_MAX_TEMP_GET "settings get maxtemp\n"
-#define CMD_MAX_TEMP_GET_LEN 21
-#define CMD_MAX_TEMP_SET "settings set maxtemp"
-#define CMD_MAX_TEMP_SET_LEN 20
 #define CMD_HEATER_DETAILS_GET "heater details\n"
 #define CMD_HEATER_DETAILS_GET_LEN 15
+#define CMD_HEATER_DETAILS_GET "heater details\n"
+#define CMD_HEATER_DETAILS_GET_LEN 15
+#define CMD_SP_TEMP_SET "settings set activetemp"
+#define CMD_SP_TEMP_SET_LEN 23
+#define CMD_SP_TEMP_GET "settings get activetemp\n"
+#define CMD_SP_TEMP_GET_LEN CMD_SP_TEMP_SET_LEN+1
+#define CMD_MAX_TEMP_SET "settings set maxtemp"
+#define CMD_MAX_TEMP_SET_LEN 20
+#define CMD_MAX_TEMP_GET "settings get maxtemp\n"
+#define CMD_MAX_TEMP_GET_LEN CMD_MAX_TEMP_SET_LEN+1
+#define CMD_IDLE_ENABLE_SET "settings set idletimerenable"
+#define CMD_IDLE_ENABLE_SET_LEN 28
+#define CMD_IDLE_ENABLE_GET "settings get idletimerenable\n"
+#define CMD_IDLE_ENABLE_GET_LEN CMD_IDLE_ENABLE_SET_LEN+1
+#define CMD_IDLE_TIMER_SET "settings set idletimer"
+#define CMD_IDLE_TIMER_SET_LEN 22
+#define CMD_IDLE_TIMER_GET "settings get idletimer\n"
+#define CMD_IDLE_TIMER_GET_LEN CMD_IDLE_TIMER_SET_LEN+1
+#define CMD_IDLE_TEMP_SET "settings set idletemp"
+#define CMD_IDLE_TEMP_SET_LEN 21
+#define CMD_IDLE_TEMP_GET "settings get idletemp\n"
+#define CMD_IDLE_TEMP_GET_LEN CMD_IDLE_TEMP_SET_LEN+1
+#define CMD_SLEEP_ENABLE_SET "settings set sleeptimerenable"
+#define CMD_SLEEP_ENABLE_SET_LEN 29
+#define CMD_SLEEP_ENABLE_GET "settings get sleeptimerenable\n"
+#define CMD_SLEEP_ENABLE_GET_LEN CMD_SLEEP_ENABLE_SET_LEN+1
+#define CMD_SLEEP_TIMER_SET "settings set sleeptimer"
+#define CMD_SLEEP_TIMER_SET_LEN 23
+#define CMD_SLEEP_TIMER_GET "settings get sleeptimer\n"
+#define CMD_SLEEP_TIMER_GET_LEN CMD_SLEEP_TIMER_SET_LEN+1
+#define CMD_UNITS_SET "settings set units"
+#define CMD_UNITS_SET_LEN 18
+#define CMD_UNITS_GET "settings get units\n"
+#define CMD_UNITS_GET_LEN CMD_UNITS_SET_LEN+1
+#define CMD_CAL_TEMP_SET "settings set tempcorrection"
+#define CMD_CAL_TEMP_SET_LEN 27
+#define CMD_CAL_TEMP_GET "settings get tempcorrection\n"
+#define CMD_CAL_TEMP_GET_LEN CMD_CAL_TEMP_SET_LEN+1
+
+//  Core Readouts
+static GtkWidget* label_state = NULL;
+static GtkWidget* label_liveTemp = NULL;
+static GtkWidget* label_livePower = NULL;
+static GtkWidget* label_liveDutyCycle = NULL;
+//  Setpoints
+static GtkWidget* label_spTemp_curr = NULL;
+static GtkWidget* text_spTemp_new = NULL;
+static GtkWidget* label_maxTemp_curr = NULL;
+static GtkWidget* text_maxTemp_new = NULL;
+//  Auxiliary Readouts
+static GtkWidget* label_uptime = NULL;
+static GtkWidget* label_faults = NULL;
+static GtkWidget* label_version = NULL;
+static GtkWidget* label_sn_device = NULL;
+static GtkWidget* label_sn_mcu = NULL;
+//  Configuration
+static GtkWidget* sw_idleEnable = NULL;
+static GtkWidget* text_idleTimer = NULL;
+static GtkWidget* text_idleTemp = NULL;
+static GtkWidget* sw_sleepEnable = NULL;
+static GtkWidget* text_sleepTimer = NULL;
+static GtkWidget* sw_units = NULL;
+static GtkWidget* text_calTemp = NULL;
+static GtkWidget* label_idleEnable = NULL;
+static GtkWidget* label_idleTimer = NULL;
+static GtkWidget* label_idleTemp = NULL;
+static GtkWidget* label_sleepEnable = NULL;
+static GtkWidget* label_sleepTimer = NULL;
+static GtkWidget* label_units = NULL;
+static GtkWidget* label_calTemp = NULL;
 
 //  Local Type Definitions
 
@@ -66,9 +128,19 @@ static inline void priv_waitInStart (void);
 static inline void priv_waitInComplete (void);
 static inline void priv_serCmd_despatch (ironCommand* ironCmd);
 static void priv_serRoutine_next (void);
+
 static inline void priv_version_get (void);
+static inline void priv_heaterDetails_get (void);
 static inline void priv_spTemp_get (void);
 static inline void priv_maxTemp_get (void);
+static inline void priv_idleEnable_get (void);
+static inline void priv_idleTimer_get (void);
+static inline void priv_idleTemp_get (void);
+static inline void priv_sleepEnable_get (void);
+static inline void priv_sleepTimer_get (void);
+static inline void priv_units_get (void);
+static inline void priv_calTemp_get (void);
+
 static inline void priv_spTemp_set (ironCommand* ironCmd);
 static inline void priv_maxTemp_set (ironCommand* ironCmd);
 //  ...  of Which are Callbacks
@@ -291,11 +363,35 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 		case ironCmdType_version_get:
 			priv_version_get ();
 			break;
+		case ironCmdType_heaterDetails_get:
+			priv_heaterDetails_get ();
+			break;
 		case ironCmdType_spTemp_get:
 			priv_spTemp_get ();
 			break;
 		case ironCmdType_maxTemp_get:
 			priv_maxTemp_get ();
+			break;
+		case ironCmdType_idleEnable_get:
+			priv_idleEnable_get ();
+			break;
+		case ironCmdType_idleTimer_get:
+			priv_idleTimer_get ();
+			break;
+		case ironCmdType_idleTemp_get:
+			priv_idleTemp_get ();
+			break;
+		case ironCmdType_sleepEnable_get:
+			priv_sleepEnable_get ();
+			break;
+		case ironCmdType_sleepTimer_get:
+			priv_sleepTimer_get ();
+			break;
+		case ironCmdType_units_get:
+			priv_units_get ();
+			break;
+		case ironCmdType_calTemp_get:
+			priv_calTemp_get ();
 			break;
 		case ironCmdType_spTemp_set:
 			priv_spTemp_set (ironCmd);
@@ -317,11 +413,35 @@ static void priv_serRoutine_next (void)
 		case ironCmdType_version_get:
 			priv_version_get ();
 			break;
+		case ironCmdType_heaterDetails_get:
+			priv_heaterDetails_get ();
+			break;
 		case ironCmdType_spTemp_get:
 			priv_spTemp_get ();
 			break;
 		case ironCmdType_maxTemp_get:
 			priv_maxTemp_get ();
+			break;
+		case ironCmdType_idleEnable_get:
+			priv_idleEnable_get ();
+			break;
+		case ironCmdType_idleTimer_get:
+			priv_idleTimer_get ();
+			break;
+		case ironCmdType_idleTemp_get:
+			priv_idleTemp_get ();
+			break;
+		case ironCmdType_sleepEnable_get:
+			priv_sleepEnable_get ();
+			break;
+		case ironCmdType_sleepTimer_get:
+			priv_sleepTimer_get ();
+			break;
+		case ironCmdType_units_get:
+			priv_units_get ();
+			break;
+		case ironCmdType_calTemp_get:
+			priv_calTemp_get ();
 			break;
 		default:
 			break;
@@ -334,6 +454,27 @@ static void priv_serRoutine_next (void)
 
 //  Getter functions.
 
+#define priv_get_u16(nameLower, nameUpper) \
+({ \
+	uint8_t buffRead [SERIAL_BUFF_SIZE]; \
+	int16_t number = priv_read_int16_t (buffRead, CMD_##nameUpper##_GET, CMD_##nameUpper##_GET_LEN); \
+	_VALUE_IS_RETURN_VOID (number, INT16_MAX); \
+	gui_##nameLower##_update (number); \
+})
+
+static inline void priv_spTemp_get (void)
+	{  priv_get_u16 (spTemp, SP_TEMP);  }
+static inline void priv_maxTemp_get (void)
+	{  priv_get_u16 (maxTemp, MAX_TEMP);  }
+static inline void priv_idleTimer_get (void)
+	{  priv_get_u16 (idleTimer, IDLE_TIMER);  }
+static inline void priv_idleTemp_get (void)
+	{  priv_get_u16 (idleTemp, IDLE_TEMP);  }
+static inline void priv_sleepTimer_get (void)
+	{  priv_get_u16 (sleepTimer, SLEEP_TIMER);  }
+static inline void priv_calTemp_get (void)
+	{  priv_get_u16 (calTemp, CAL_TEMP);  }
+
 static inline void priv_version_get (void)
 {
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
@@ -343,19 +484,38 @@ static inline void priv_version_get (void)
 	_LOG (5, "Version:\n%s\n", start);
 }
 
-static inline void priv_spTemp_get (void)
+static inline void priv_heaterDetails_get (void)
 {
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
-	int16_t number = priv_read_int16_t (buffRead, CMD_SP_TEMP_GET, CMD_SP_TEMP_GET_LEN);
-	_VALUE_IS_RETURN_VOID (number, INT16_MAX);
-	gui_spTemp_update (number);
+	uint8_t* start;
+	int amount = priv_read_skipEchoBack (buffRead, CMD_HEATER_DETAILS_GET, CMD_HEATER_DETAILS_GET_LEN, &start);
+	if (amount < 0) return;
+	_LOG (5, "Heater Details:\n%s\n", start);
 }
-static inline void priv_maxTemp_get (void)
+
+static inline void priv_idleEnable_get (void)
 {
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
-	int16_t number = priv_read_int16_t (buffRead, CMD_MAX_TEMP_GET, CMD_MAX_TEMP_GET_LEN);
-	_VALUE_IS_RETURN_VOID (number, INT16_MAX);
-	gui_maxTemp_update (number);
+	uint8_t* start;
+	int amount = priv_read_oneliner (buffRead, CMD_IDLE_ENABLE_GET, CMD_IDLE_ENABLE_GET_LEN, &start);
+	if (amount < 0) return;
+	_LOG (5, "Idle Enable:  %s\n", start);
+}
+static inline void priv_sleepEnable_get (void)
+{
+	uint8_t buffRead [SERIAL_BUFF_SIZE];
+	uint8_t* start;
+	int amount = priv_read_oneliner (buffRead, CMD_SLEEP_ENABLE_GET, CMD_SLEEP_ENABLE_GET_LEN, &start);
+	if (amount < 0) return;
+	_LOG (5, "Sleep Enable:  %s\n", start);
+}
+static inline void priv_units_get (void)
+{
+	uint8_t buffRead [SERIAL_BUFF_SIZE];
+	uint8_t* start;
+	int amount = priv_read_oneliner (buffRead, CMD_UNITS_GET, CMD_UNITS_GET_LEN, &start);
+	if (amount < 0) return;
+	_LOG (5, "Units:  %s\n", start);
 }
 
 

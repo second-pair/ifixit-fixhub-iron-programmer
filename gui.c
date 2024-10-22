@@ -22,6 +22,11 @@
 
 //  Defines
 #define LABEL_LEN_NUMBER 16
+//  https://stackoverflow.com/a/240370
+#define STRINGIFY(x) #x
+#define TOSTR(x) STRINGIFY(x)
+//#define AT __FILE__ ":" TOSTRING(__LINE__)
+
 
 //  Local Type Definitions
 
@@ -207,7 +212,7 @@ static GtkWidget* priv_setpoints_create (void)
 	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TEMP), 0, 1, 1, 1);
 	label_spTemp_curr = gtk_label_new ("<spTemp>");
 	gtk_grid_attach (GTK_GRID (grid_setpoints), label_spTemp_curr, 1, 1, 1, 1);
-	GtkEntryBuffer* buffer_spTemp_new = gtk_entry_buffer_new (GUI_SP_TEMP_DEFAULT, -1);
+	GtkEntryBuffer* buffer_spTemp_new = gtk_entry_buffer_new (TOSTR (GUI_SP_TEMP_DEFAULT), -1);
 	text_spTemp_new = gtk_text_new_with_buffer (buffer_spTemp_new);
 	gtk_grid_attach (GTK_GRID (grid_setpoints), text_spTemp_new, 2, 1, 1, 1);
 	GtkWidget* btn_spTemp_set = gtk_button_new_with_label (TEXT_SET);
@@ -218,7 +223,7 @@ static GtkWidget* priv_setpoints_create (void)
 	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TEMP_MAX), 0, 2, 1, 1);
 	label_maxTemp_curr = gtk_label_new ("<maxTemp>");
 	gtk_grid_attach (GTK_GRID (grid_setpoints), label_maxTemp_curr, 1, 2, 1, 1);
-	GtkEntryBuffer* buffer_maxTemp_new = gtk_entry_buffer_new (GUI_MAX_TEMP_DEFAULT, -1);
+	GtkEntryBuffer* buffer_maxTemp_new = gtk_entry_buffer_new (TOSTR (GUI_MAX_TEMP_DEFAULT), -1);
 	text_maxTemp_new = gtk_text_new_with_buffer (buffer_maxTemp_new);
 	gtk_grid_attach (GTK_GRID (grid_setpoints), text_maxTemp_new, 2, 2, 1, 1);
 	GtkWidget* btn_maxTemp_set = gtk_button_new_with_label (TEXT_SET);
@@ -282,17 +287,16 @@ static GtkWidget* priv_config_create (void)
 	label_idleEnable_curr = gtk_label_new ("<idleEnable>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_idleEnable_curr, 1, rp, 1, 1);
 	sw_idleEnable_new = gtk_switch_new ();
-	gtk_switch_set_active (GTK_SWITCH (sw_idleEnable_new), GUI_IDLE_ENABLE_DEFAULT);
-	gtk_switch_set_state (GTK_SWITCH (sw_idleEnable_new), GUI_IDLE_ENABLE_DEFAULT);
+	gui_sw_idleEnable_forceState (GUI_IDLE_ENABLE_DEFAULT);
 	gtk_grid_attach (GTK_GRID (grid_config), sw_idleEnable_new, 2, rp, 1, 1);
 	label_idleTimer_curr = gtk_label_new ("<idleTimer>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_idleTimer_curr, 3, rp, 1, 1);
-	GtkEntryBuffer* buffer_idleTimer_new = gtk_entry_buffer_new (GUI_IDLE_TIMER_DEFAULT, -1);
+	GtkEntryBuffer* buffer_idleTimer_new = gtk_entry_buffer_new (TOSTR (GUI_IDLE_TIMER_DEFAULT), -1);
 	text_idleTimer_new = gtk_text_new_with_buffer (buffer_idleTimer_new);
 	gtk_grid_attach (GTK_GRID (grid_config), text_idleTimer_new, 4, rp, 1, 1);
 	label_idleTemp_curr = gtk_label_new ("<idleTemp>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_idleTemp_curr, 5, rp, 1, 1);
-	GtkEntryBuffer* buffer_idleTemp_new = gtk_entry_buffer_new (GUI_IDLE_TEMP_DEFAULT, -1);
+	GtkEntryBuffer* buffer_idleTemp_new = gtk_entry_buffer_new (TOSTR (GUI_IDLE_TEMP_DEFAULT), -1);
 	text_idleTemp_new = gtk_text_new_with_buffer (buffer_idleTemp_new);
 	gtk_grid_attach (GTK_GRID (grid_config), text_idleTemp_new, 6, rp, 1, 1);
 	GtkWidget* btn_idle = gtk_button_new_with_label (TEXT_SET);
@@ -304,12 +308,11 @@ static GtkWidget* priv_config_create (void)
 	label_sleepEnable_curr = gtk_label_new ("<sleepEnable>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_sleepEnable_curr, 1, rp, 1, 1);
 	sw_sleepEnable_new = gtk_switch_new ();
-	gtk_switch_set_active (GTK_SWITCH (sw_sleepEnable_new), GUI_SLEEP_ENABLE_DEFAULT);
-	gtk_switch_set_state (GTK_SWITCH (sw_sleepEnable_new), GUI_SLEEP_ENABLE_DEFAULT);
+	gui_sw_sleepEnable_forceState (GUI_SLEEP_ENABLE_DEFAULT);
 	gtk_grid_attach (GTK_GRID (grid_config), sw_sleepEnable_new, 2, rp, 1, 1);
 	label_sleepTimer_curr = gtk_label_new ("<sleepTimer>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_sleepTimer_curr, 3, rp, 1, 1);
-	GtkEntryBuffer* buffer_sleepTimer_new = gtk_entry_buffer_new (GUI_SLEEP_ENABLE_TIMER, -1);
+	GtkEntryBuffer* buffer_sleepTimer_new = gtk_entry_buffer_new (TOSTR (GUI_SLEEP_ENABLE_TIMER), -1);
 	text_sleepTimer_new = gtk_text_new_with_buffer (buffer_sleepTimer_new);
 	gtk_grid_attach (GTK_GRID (grid_config), text_sleepTimer_new, 4, rp, 1, 1);
 	GtkWidget* btn_sleep = gtk_button_new_with_label (TEXT_SET);
@@ -324,8 +327,7 @@ static GtkWidget* priv_config_create (void)
 	gtk_box_append (GTK_BOX (box_units), label_units_curr);
 	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_UNIT_TEMP_F));
 	sw_units_new = gtk_switch_new ();
-	gtk_switch_set_active (GTK_SWITCH (sw_units_new), GUI_UNIT_CELSIUS_DEFAULT);
-	gtk_switch_set_state (GTK_SWITCH (sw_units_new), GUI_UNIT_CELSIUS_DEFAULT);
+	gui_sw_units_forceState (GUI_UNIT_CELSIUS_DEFAULT);
 	gtk_box_append (GTK_BOX (box_units), sw_units_new);
 	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_UNIT_TEMP_C));
 	gtk_grid_attach (GTK_GRID (grid_config), box_units, 0, rp++, 5, 1);
@@ -335,7 +337,7 @@ static GtkWidget* priv_config_create (void)
 	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_CAL_TEMP), 1, rp, 1, 1);
 	label_calTemp_curr = gtk_label_new ("<+0"TEXT_UNIT_TEMP_C">");
 	gtk_grid_attach (GTK_GRID (grid_config), label_calTemp_curr, 2, rp, 1, 1);
-	GtkEntryBuffer* buffer_calTemp_new = gtk_entry_buffer_new (GUI_CAL_TEMP_DEFAULT, -1);
+	GtkEntryBuffer* buffer_calTemp_new = gtk_entry_buffer_new (TOSTR (GUI_CAL_TEMP_DEFAULT), -1);
 	text_calTemp_new = gtk_text_new_with_buffer (buffer_calTemp_new);
 	gtk_grid_attach (GTK_GRID (grid_config), text_calTemp_new, 3, rp, 1, 1);
 	GtkWidget* btn_calTemp = gtk_button_new_with_label (TEXT_SET);
@@ -408,6 +410,21 @@ void gui_btnPort_forceState (uint8_t openNClosed)
 {
 	gtk_button_set_label (GTK_BUTTON (btn_ser_connect), openNClosed ? TEXT_SER_CLOSE : TEXT_SER_OPEN);
 }
+void gui_sw_idleEnable_forceState (uint8_t onNOff)
+{
+	gtk_switch_set_active (GTK_SWITCH (sw_idleEnable_new), onNOff);
+	gtk_switch_set_state (GTK_SWITCH (sw_idleEnable_new), onNOff);
+}
+void gui_sw_sleepEnable_forceState (uint8_t onNOff)
+{
+	gtk_switch_set_active (GTK_SWITCH (sw_sleepEnable_new), onNOff);
+	gtk_switch_set_state (GTK_SWITCH (sw_sleepEnable_new), onNOff);
+}
+void gui_sw_units_forceState (uint8_t onNOff)
+{
+	gtk_switch_set_active (GTK_SWITCH (sw_units_new), onNOff);
+	gtk_switch_set_state (GTK_SWITCH (sw_units_new), onNOff);
+}
 
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 {
@@ -427,16 +444,15 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 	}
 }
 
-static void cb_btn_reset_clicked (GtkButton* theButton, gpointer data)
-{
-	serial_cmd_noParams_submit (ironCmdType_reset);
-}
-static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
-{
-	serial_cmd_noParams_submit (ironCmdType_reboot);
-}
-
 //  Helper functions for the Setter Buttons
+#define number_cmdSubmit_number(cmdType, theNumber) \
+({ \
+	ironCommand* ironCmd = malloc (sizeof (ironCommand)); \
+	_NULL_EXIT (ironCmd); \
+	ironCmd -> type = cmdType; \
+	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%d", theNumber); \
+	serial_cmd_submit (ironCmd); \
+})
 #define text_cmdSubmit_number(cmdType, theText, numType, numMin, numMax) \
 ({ \
 	GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (theText)); \
@@ -451,7 +467,7 @@ static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%d", newSp); \
 	serial_cmd_submit (ironCmd); \
 })
-#define sw_cmdSubmit_boolText(cmd, state, textOff, textOn) \
+#define cmdSubmit_boolText(cmd, state, textOff, textOn) \
 ({ \
 	ironCommand* ironCmd = malloc (sizeof (ironCommand)); \
 	_NULL_EXIT (ironCmd); \
@@ -473,26 +489,53 @@ static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data)
 }
 static void cb_btn_idle_clicked (GtkButton* theButton, gpointer data)
 {
-	sw_cmdSubmit_boolText (ironCmdType_idleEnable_set,
+	cmdSubmit_boolText (ironCmdType_idleEnable_set,
 		gtk_switch_get_state (GTK_SWITCH (sw_idleEnable_new)), "0", "1");
-	text_cmdSubmit_number (ironCmdType_idleTimer_set, text_idleTimer_new, uint16_t, 0, UINT16_MAX);
-	text_cmdSubmit_number (ironCmdType_idleTemp_set, text_idleTemp_new, uint16_t, 0, UINT16_MAX);
+	text_cmdSubmit_number (ironCmdType_idleTimer_set, text_idleTimer_new,
+		uint16_t, 0, UINT16_MAX);
+	text_cmdSubmit_number (ironCmdType_idleTemp_set, text_idleTemp_new,
+		uint16_t, 0, UINT16_MAX);
 }
 static void cb_btn_sleep_clicked (GtkButton* theButton, gpointer data)
 {
-	sw_cmdSubmit_boolText (ironCmdType_sleepEnable_set,
+	cmdSubmit_boolText (ironCmdType_sleepEnable_set,
 		gtk_switch_get_state (GTK_SWITCH (sw_sleepEnable_new)), "0", "1");
-	text_cmdSubmit_number (ironCmdType_sleepTimer_set, text_sleepTimer_new, uint16_t, 0, UINT16_MAX);
+	text_cmdSubmit_number (ironCmdType_sleepTimer_set, text_sleepTimer_new,
+		uint16_t, 0, UINT16_MAX);
 }
 static void cb_sw_units_stateSet (GtkSwitch* theSwitch, gboolean state, gpointer data)
 {
-	sw_cmdSubmit_boolText (ironCmdType_units_set, state, "F", "C");
+	cmdSubmit_boolText (ironCmdType_units_set, state, "F", "C");
 	gtk_switch_set_state (GTK_SWITCH (theSwitch), state);
 }
 static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data)
 {
 	text_cmdSubmit_number (ironCmdType_calTemp_set, text_calTemp_new,
 		int16_t, INT16_MIN, INT16_MAX);
+}
+
+static void cb_btn_reset_clicked (GtkButton* theButton, gpointer data)
+{
+	//serial_cmd_noParams_submit (ironCmdType_reset);
+	//  Send the default values.
+	cmdSubmit_boolText (ironCmdType_units_set, GUI_UNIT_CELSIUS_DEFAULT, "F", "C");
+	cmdSubmit_boolText (ironCmdType_idleEnable_set, GUI_IDLE_ENABLE_DEFAULT, "0", "1");
+	cmdSubmit_boolText (ironCmdType_sleepEnable_set, GUI_SLEEP_ENABLE_DEFAULT, "0", "1");
+	number_cmdSubmit_number (ironCmdType_spTemp_set, GUI_SP_TEMP_DEFAULT);
+	number_cmdSubmit_number (ironCmdType_maxTemp_set, GUI_MAX_TEMP_DEFAULT);
+	number_cmdSubmit_number (ironCmdType_idleTimer_set, GUI_IDLE_TIMER_DEFAULT);
+	number_cmdSubmit_number (ironCmdType_idleTemp_set, GUI_IDLE_TEMP_DEFAULT);
+	number_cmdSubmit_number (ironCmdType_sleepTimer_set, GUI_SLEEP_ENABLE_TIMER);
+	number_cmdSubmit_number (ironCmdType_calTemp_set, GUI_CAL_TEMP_DEFAULT);
+
+	//  Set the switch states.
+	gui_sw_idleEnable_forceState (GUI_IDLE_ENABLE_DEFAULT);
+	gui_sw_sleepEnable_forceState (GUI_SLEEP_ENABLE_DEFAULT);
+	gui_sw_units_forceState (GUI_UNIT_CELSIUS_DEFAULT);
+}
+static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
+{
+	serial_cmd_noParams_submit (ironCmdType_reboot);
 }
 
 

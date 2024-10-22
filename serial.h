@@ -30,8 +30,8 @@
 #define SERIAL_CMD_SIZE 64
 #define SERIAL_PARAM_SIZE 32
 #define SERIAL_PORT_PATH_LEN 128
-#define SERIAL_RESET_DELAY_MS 10
-#define SERIAL_RESET_RESTORE 0  //  Haven't yet gotten this to re-sync correctly.
+#define SERIAL_REBOOT_DELAY_MS 10
+#define SERIAL_REBOOT_RESTORE 0  //  Haven't yet gotten this to re-sync correctly.
 #define SERIAL_IRON_GET_TYPE_MAX 11
 
 //  Global Type Definitions
@@ -51,7 +51,8 @@ typedef enum ironCommandType
 	ironCmdType_sleepEnable_set, ironCmdType_sleepTimer_set,
 	ironCmdType_units_set, ironCmdType_calTemp_set,
 	//  Operation Commands
-	ironCmdType_reset, ironCmdType_reboot
+	//ironCmdType_reset,
+	ironCmdType_reboot
 } ironCommandType;
 
 //  Global Structures

@@ -27,15 +27,15 @@
 
 //  Defines
 #define GUI_PORT_DEFAULT "/dev/ttyACM0"
-#define GUI_SP_TEMP_DEFAULT "350"
-#define GUI_MAX_TEMP_DEFAULT "420"
+#define GUI_SP_TEMP_DEFAULT 350
+#define GUI_MAX_TEMP_DEFAULT 420
 #define GUI_IDLE_ENABLE_DEFAULT 1
-#define GUI_IDLE_TIMER_DEFAULT "30"
-#define GUI_IDLE_TEMP_DEFAULT "100"
+#define GUI_IDLE_TIMER_DEFAULT 30
+#define GUI_IDLE_TEMP_DEFAULT 100
 #define GUI_SLEEP_ENABLE_DEFAULT 1
-#define GUI_SLEEP_ENABLE_TIMER "60"
+#define GUI_SLEEP_ENABLE_TIMER 60
 #define GUI_UNIT_CELSIUS_DEFAULT 1
-#define GUI_CAL_TEMP_DEFAULT "0"
+#define GUI_CAL_TEMP_DEFAULT 0
 
 //#  Defaults for the Config section.
 
@@ -48,6 +48,10 @@
 //  Global Prototype Functions
 void cb_app_main_activate (GtkApplication* theApp, gpointer data);
 void gui_btnPort_forceState (uint8_t openNClosed);
+void gui_sw_idleEnable_forceState (uint8_t onNOff);
+void gui_sw_sleepEnable_forceState (uint8_t onNOff);
+void gui_sw_units_forceState (uint8_t onNOff);
+
 void gui_spTemp_update (uint16_t newValue);
 void gui_maxTemp_update (uint16_t newValue);
 void gui_idleEnable_update (uint16_t newValue);

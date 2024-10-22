@@ -113,12 +113,12 @@ static inline void priv_version_get (void);
 static inline void priv_heaterDetails_get (void);
 static inline void priv_spTemp_get (void);
 static inline void priv_maxTemp_get (void);
-static inline void priv_idleEnable_get (void);
+static inline int8_t priv_idleEnable_get (void);
 static inline void priv_idleTimer_get (void);
 static inline void priv_idleTemp_get (void);
-static inline void priv_sleepEnable_get (void);
+static inline int8_t priv_sleepEnable_get (void);
 static inline void priv_sleepTimer_get (void);
-static inline void priv_units_get (void);
+static inline int8_t priv_units_get (void);
 static inline void priv_calTemp_get (void);
 //  Setter functions.
 static inline void priv_spTemp_set (ironCommand* ironCmd);
@@ -131,7 +131,7 @@ static inline void priv_sleepTimer_set (ironCommand* ironCmd);
 static inline void priv_units_set (ironCommand* ironCmd);
 static inline void priv_calTemp_set (ironCommand* ironCmd);
 //  Operation command functions.
-static inline void priv_reset (void);
+//static inline void priv_reset (void);
 static inline void priv_reboot (uint8_t restore);
 //  ...  of Which are Callbacks
 void* thread_serial_run (void* args);
@@ -178,6 +178,11 @@ void serial_init (const char* portPath)
 	//  Flush the input buffer.
 	priv_waitInComplete ();
 	sp_flush (port_iron, SP_BUF_INPUT);
+
+	//  Perform initial parameter requests - mainly for switches.
+	gui_sw_idleEnable_forceState (priv_idleEnable_get () == 1 ? 1 : 0);
+	gui_sw_sleepEnable_forceState (priv_sleepEnable_get () == 1 ? 1 : 0);
+	gui_sw_units_forceState (priv_units_get () == 1 ? 1 : 0);
 
 	//  Create the command-handling thread.
 	thread_run = 1;
@@ -404,7 +409,7 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 		case ironCmdType_units_get:
 			priv_units_get ();
 			break;
-			//  Setter functions.
+		//  Setter functions.
 		case ironCmdType_calTemp_get:
 			priv_calTemp_get ();
 			break;
@@ -435,12 +440,12 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 		case ironCmdType_calTemp_set:
 			priv_calTemp_set (ironCmd);
 			break;
-			//  Operation command functions.
-		case ironCmdType_reset:
-			priv_reset ();
-			break;
+		//  Operation command functions.
+		//case ironCmdType_reset:
+		//	priv_reset ();
+		//	break;
 		case ironCmdType_reboot:
-			priv_reboot (SERIAL_RESET_RESTORE);
+			priv_reboot (SERIAL_REBOOT_RESTORE);
 			break;
 		default:
 			break;
@@ -497,6 +502,8 @@ static void priv_serRoutine_next (void)
 
 //  Getter functions.
 
+//#define priv_get_parse_skipLines()
+
 #define priv_get(nameLower, nameUpper, type, maxBound) \
 ({ \
 	uint8_t buffRead [SERIAL_BUFF_SIZE]; \
@@ -520,10 +527,13 @@ static inline void priv_calTemp_get (void)
 
 static inline void priv_version_get (void)
 {
+	//  Get the information.
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
 	int amount = priv_read_skipEchoBack (buffRead, CMD_VERSION_GET, CMD_VERSION_GET_LEN, &start);
-	if (amount < 0) return;
+	if (amount < 0)
+		return;
+	//  Parse the information.
 	_LOG (5, "Version:\n%s\n", start);
 }
 
@@ -540,68 +550,92 @@ static inline void priv_heaterDetails_get (void)
 	_LOG (5, "Heater Details:\n%s\n", start);
 }
 
-static inline void priv_idleEnable_get (void)
+static inline int8_t priv_idleEnable_get (void)
 {
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
 	int amount = priv_read_oneliner (buffRead, CMD_IDLE_ENABLE_GET, CMD_IDLE_ENABLE_GET_LEN, &start);
+	int8_t retCode = -1;
 	if (amount < 0)
 	{
 		_LOG (1, "No data received!  Returning...\n");
-		return;
+		return retCode;
 	}
 	else if (_STRING_COMPARE (start, "Enabled\r"))
+	{
+		retCode = 1;
 		gui_idleEnable_update (1);
+	}
 	else if (_STRING_COMPARE (start, "Disabled\r"))
+	{
+		retCode = 0;
 		gui_idleEnable_update (0);
+	}
 	else
 	{
 		_LOG (1, "Bad Idle Enable received!  Returning...\n");
-		return;
+		return retCode;
 	}
 	_LOG (5, "Idle Enable:  %s\n", start);
+	return retCode;
 }
-static inline void priv_sleepEnable_get (void)
+static inline int8_t priv_sleepEnable_get (void)
 {
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
 	int amount = priv_read_oneliner (buffRead, CMD_SLEEP_ENABLE_GET, CMD_SLEEP_ENABLE_GET_LEN, &start);
+	int8_t retCode = -1;
 	if (amount < 0)
 	{
 		_LOG (1, "No data received!  Returning...\n");
-		return;
+		return retCode;
 	}
 	else if (_STRING_COMPARE (start, "Enabled\r"))
+	{
+		retCode = 1;
 		gui_sleepEnable_update (1);
+	}
 	else if (_STRING_COMPARE (start, "Disabled\r"))
+	{
+		retCode = 0;
 		gui_sleepEnable_update (0);
+	}
 	else
 	{
 		_LOG (1, "Bad Sleep Enable received!  Returning...\n");
-		return;
+		return retCode;
 	}
 	_LOG (5, "Sleep Enable:  %s\n", start);
+	return retCode;
 }
-static inline void priv_units_get (void)
+static inline int8_t priv_units_get (void)
 {
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
 	int amount = priv_read_oneliner (buffRead, CMD_UNITS_GET, CMD_UNITS_GET_LEN, &start);
+	int8_t retCode = -1;
 	if (amount < 0)
 	{
 		_LOG (1, "No data received!  Returning...\n");
-		return;
+		return retCode;
 	}
 	else if (_STRING_COMPARE (start, "C\r"))
+	{
+		retCode = 1;
 		gui_units_update (1);
+	}
 	else if (_STRING_COMPARE (start, "F\r"))
+	{
+		retCode = 0;
 		gui_units_update (0);
+	}
 	else
 	{
 		_LOG (1, "Bad Unit received!  Returning...\n");
-		return;
+		return retCode;
 	}
 	_LOG (5, "Units:  %s\n", start);
+	return retCode;
 }
 
 
@@ -633,25 +667,26 @@ static inline void priv_calTemp_set (ironCommand* ironCmd)
 	{  priv_set (CMD_CAL_TEMP_SET, CMD_CAL_TEMP_SET_LEN, priv_calTemp_get);  }
 
 //  Operation command functions.
-static inline void priv_reset (void)
-{
-	_LOG (1, "Reset not yet implemented.\n");
-}
+//  I couldn't find a firmware-tied reset command, so I'll be implementing my own in 'gui.c'.
+//static inline void priv_reset (void)
+//{
+//	_LOG (1, "Reset not yet implemented.\n");
+//}
 static inline void priv_reboot (uint8_t restore)
 {
 	_LOG (1, "Performing Iron reboot sequence.\n");
-	//  I'll implement a one-off custom for this, as the iron should reset once this has been sent.
+	//  I'll implement a one-off custom for this, as the iron should reboot once this has been sent.
 	_NULL_RETURN_VOID (port_iron);
 	//  Retrieve the port path for re-opening later.
 	const char* _portPath = sp_get_port_name (port_iron);
 	char portPath [SERIAL_PORT_PATH_LEN];
 	snprintf (portPath, SERIAL_PORT_PATH_LEN, "%s", _portPath);
-	//  Write the reset command.
+	//  Write the reboot command.
 	sp_nonblocking_write (port_iron, CMD_REBOOT, CMD_REBOOT_LEN);
 	//  Close the port.
 	serial_close ();
 	//  Wait for a wee bit.
-	_SLEEP_MS (SERIAL_RESET_DELAY_MS);
+	_SLEEP_MS (SERIAL_REBOOT_DELAY_MS);
 	//  Re-open it.
 	if (restore)
 		serial_init (portPath);

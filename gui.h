@@ -26,7 +26,12 @@
 #include "includes.h"
 
 //  Defines
-#define GUI_PORT_DEFAULT "/dev/ttyACM0"
+#if defined _WIN32 || defined _WINDOWS || defined __CYGWIN__ || defined __NT__
+	#define GUI_PORT_DEFAULT "COM0"
+#else
+	#define GUI_PORT_DEFAULT "/dev/ttyACM0"
+#endif
+//  Defaults for the Config section.
 #define GUI_SP_TEMP_DEFAULT 350
 #define GUI_MAX_TEMP_DEFAULT 420
 #define GUI_IDLE_ENABLE_DEFAULT 1
@@ -37,9 +42,13 @@
 #define GUI_UNIT_CELSIUS_DEFAULT 1
 #define GUI_CAL_TEMP_DEFAULT 0
 
-//#  Defaults for the Config section.
-
 //  Global Type Definitions
+
+//  Global Enumerations
+typedef enum ironState
+{
+	ironState_veryOff
+} ironState;
 
 //  Global Structures
 
@@ -52,6 +61,10 @@ void gui_sw_idleEnable_forceState (uint8_t onNOff);
 void gui_sw_sleepEnable_forceState (uint8_t onNOff);
 void gui_sw_units_forceState (uint8_t onNOff);
 
+void gui_liveTemp_update (float newValue);
+void gui_livePower_update (uint16_t newValue);
+void gui_liveDutyCycle_update (uint16_t newValue);
+void gui_state_update (ironState newValue);
 void gui_spTemp_update (uint16_t newValue);
 void gui_maxTemp_update (uint16_t newValue);
 void gui_idleEnable_update (uint16_t newValue);

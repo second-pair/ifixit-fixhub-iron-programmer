@@ -40,8 +40,9 @@
 #define TEXT_SER_CLOSE "Close Port"
 //  Core Readouts
 #define TEXT_CORE_TITLE "Core Readouts"
-#define TEXT_CORE_STATE "Status"
 #define TEXT_CORE_READOUT "Readout"
+#define TEXT_CORE_STATE "Status"
+#define TEXT_CORE_STATE_UNKNOWN "Unknown State!"
 //  Setpoints
 #define TEXT_SETPOINTS_TITLE "Setpoints"
 #define TEXT_SETPOINTS_TEMP "Target Temp"

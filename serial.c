@@ -23,7 +23,7 @@
 //  Defines
 #define WAIT_COUNT 100
 #define WAIT_SLEEP_MS 1
-#define THREAD_SLEEP_MS 1
+#define THREAD_SLEEP_MS (333 / SERIAL_IRON_GET_TYPE_MAX)
 #define THREAD_QUEUE_WAIT_MS 1
 
 //  Serial port config.
@@ -97,16 +97,23 @@ sig_atomic_t thread_run = 0;
 //  Truly Global Variables
 
 //  Local Prototype Functions
+//  Sending & Reading functions.
 static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t length);
 static inline int priv_read_skipEchoBack (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
 static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
 static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length);
 static inline uint16_t priv_read_uint16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length);
 static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, const char* params);
+//  Other Serial helper functions.
 static inline void priv_waitInStart (void);
 static inline void priv_waitInComplete (void);
+//  Serial command managing functions.
 static inline void priv_serCmd_despatch (ironCommand* ironCmd);
 static void priv_serRoutine_next (void);
+//  Buffer manipulation functions.
+static inline uint16_t priv_buff_skipLines (uint8_t** start, uint16_t skips, int buffLen);
+static inline uint16_t priv_buff_skipChars (uint8_t** start, uint16_t skips, int buffLen);
+
 
 //  Getter functions.
 static inline void priv_version_get (void);
@@ -180,6 +187,7 @@ void serial_init (const char* portPath)
 	sp_flush (port_iron, SP_BUF_INPUT);
 
 	//  Perform initial parameter requests - mainly for switches.
+	//#  It's probably worth extending this to all of the variables.
 	gui_sw_idleEnable_forceState (priv_idleEnable_get () == 1 ? 1 : 0);
 	gui_sw_sleepEnable_forceState (priv_sleepEnable_get () == 1 ? 1 : 0);
 	gui_sw_units_forceState (priv_units_get () == 1 ? 1 : 0);
@@ -247,6 +255,8 @@ void serial_cmd_noParams_submit (ironCommandType type)
 //  *--<Private Code>--*  //
 
 
+//  Sending & Reading functions.
+
 //  Send a command, wait for the iron to send its response, skip the echo-back and return the rest.
 static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t length)
 {
@@ -277,12 +287,8 @@ static inline int priv_read_skipEchoBack (uint8_t* buffRead, const char* cmdStr,
 	if (amount < 0)
 		return amount;
 	//  Skip past the echo-back first line response.
-	int stt = 0;
-	for (; buffRead [stt] != '\n' && buffRead [stt] != '\0' && stt < amount; (stt) ++) {}
-	if (stt < amount-1) (stt) ++;
-	//  Return
-	*start = buffRead + stt;
-	return amount;
+	*start = buffRead;
+	return amount - priv_buff_skipLines (start, 1, amount);
 }
 
 //  `priv_read ()`, but caps the response to the first line after the echo-back.
@@ -347,6 +353,9 @@ static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, con
 	return priv_read (buffRead, fullCmd, amount);
 }
 
+
+//  Other Serial helper functions.
+
 //  Wait upto 'WAIT_COUNT' times for Serial data to start gathering.
 static inline void priv_waitInStart (void)
 {
@@ -372,6 +381,8 @@ static inline void priv_waitInComplete (void)
 	while (waiting != waitingLast);
 }
 
+
+//  Serial command managing functions.
 
 //  Serial Command despatcher.
 static inline void priv_serCmd_despatch (ironCommand* ironCmd)
@@ -451,6 +462,7 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 			break;
 	}
 }
+
 //  Routine data-fetch actioner.
 static void priv_serRoutine_next (void)
 {
@@ -500,6 +512,34 @@ static void priv_serRoutine_next (void)
 }
 
 
+//  Buffer manipulation functions.
+
+//  Skip past 'skips' newline sections in the provided buffer pointer.
+static inline uint16_t priv_buff_skipLines (uint8_t** start, uint16_t skips, int buffLen)
+{
+	uint16_t stt = 0;
+	for (uint16_t i = 0; i < skips; i ++)
+	{
+		//  Find the next newline.
+		for (; (*start) [stt] != '\r' && (*start) [stt] != '\n' && (*start) [stt] != '\0' && stt < buffLen; stt ++) {}
+		//  Skip the rest of the newline block.
+		for (; ((*start) [stt] == '\r' || (*start) [stt] == '\n') && stt < buffLen; (stt) ++) {}
+	}
+	//  Return
+	(*start) += stt;
+	return stt;
+}
+static inline uint16_t priv_buff_skipChars (uint8_t** start, uint16_t skips, int buffLen)
+{
+	uint16_t stt = 0;
+	//  Skip for as long as it is safe to do so.
+	for (; stt < skips && (*start) [stt] != '\0' && stt < buffLen; stt ++) {}
+	//  Return
+	(*start) += stt;
+	return stt;
+}
+
+
 //  Getter functions.
 
 //#define priv_get_parse_skipLines()
@@ -532,13 +572,17 @@ static inline void priv_version_get (void)
 	uint8_t* start;
 	int amount = priv_read_skipEchoBack (buffRead, CMD_VERSION_GET, CMD_VERSION_GET_LEN, &start);
 	if (amount < 0)
+	{
+		_LOG (1, "No data received!  Returning...\n");
 		return;
+	}
 	//  Parse the information.
 	_LOG (5, "Version:\n%s\n", start);
 }
 
 static inline void priv_heaterDetails_get (void)
 {
+	//  Get the information.
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	uint8_t* start;
 	int amount = priv_read_skipEchoBack (buffRead, CMD_HEATER_DETAILS_GET, CMD_HEATER_DETAILS_GET_LEN, &start);
@@ -547,7 +591,40 @@ static inline void priv_heaterDetails_get (void)
 		_LOG (1, "No data received!  Returning...\n");
 		return;
 	}
-	_LOG (5, "Heater Details:\n%s\n", start);
+	_LOG (5, "Heater Details:\n\n%s\n", start);
+	/*  Parse the information.
+	06:  | current filtered temp: 22.28 C|
+	10:  |          tip power mW: 2250|
+	12:  |        pwm duty cycle: 100|
+	13:  |            switch on?: Yes|
+	14:  |        tip installed?: Yes|
+	15:  |                 state: Active|
+	*/
+	amount -= priv_buff_skipLines (&start, 5, amount);
+	amount -= priv_buff_skipChars (&start, 24, amount);
+	float liveTemp = strtof ((char*)start, NULL);
+	_CAP_RANGE (1, "%f", liveTemp, 0.0, 10000.0);
+	gui_liveTemp_update (liveTemp);
+	amount -= priv_buff_skipLines (&start, 4, amount);
+	amount -= priv_buff_skipChars (&start, 24, amount);
+	int livePower = strtol ((char*)start, NULL, 10);
+	_CAP_RANGE (1, "%u", livePower, 0, UINT16_MAX);
+	gui_livePower_update (livePower);
+	amount -= priv_buff_skipLines (&start, 2, amount);
+	amount -= priv_buff_skipChars (&start, 24, amount);
+	int liveDutyCycle = strtol ((char*)start, NULL, 10);
+	_CAP_RANGE (1, "%u", liveDutyCycle, 0, UINT16_MAX);
+	gui_liveDutyCycle_update (liveDutyCycle);
+	amount -= priv_buff_skipLines (&start, 1, amount);
+	amount -= priv_buff_skipChars (&start, 24, amount);
+	//_LOG (0, "Heater Details:\n\n%6s\n", start);
+	amount -= priv_buff_skipLines (&start, 1, amount);
+	amount -= priv_buff_skipChars (&start, 24, amount);
+	//_LOG (0, "Heater Details:\n\n%6s\n", start);
+	amount -= priv_buff_skipLines (&start, 1, amount);
+	amount -= priv_buff_skipChars (&start, 24, amount);
+	//_LOG (0, "Heater Details:\n\n%6s\n", start);
+	gui_state_update (ironState_veryOff);
 }
 
 static inline int8_t priv_idleEnable_get (void)
@@ -711,8 +788,9 @@ void* thread_serial_run (void* args)
 			priv_serCmd_despatch (ironCmd);
 		else
 			priv_serRoutine_next ();
-		//#  Consider implementing this anyway so we don't bog down the soldering iron.
-		//_SLEEP_MS (THREAD_SLEEP_MS); - this gets handled fine by `g_async_queue_timeout_pop ()`.
+		//  Implementing this so we don't bog down the soldering iron; which seems to perform its core-loop at around 3Hz.
+		//#  Implement a "Wait Until" instead of a "Wait For".
+		_SLEEP_MS (THREAD_SLEEP_MS);
 	}
 	return NULL;
 }

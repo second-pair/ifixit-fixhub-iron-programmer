@@ -92,6 +92,10 @@ static void cb_btn_sleep_clicked (GtkButton* theButton, gpointer data);
 static void cb_sw_units_stateSet (GtkSwitch* theSwitch, gboolean state, gpointer data);
 static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data);
 
+static gboolean cb_liveTemp_update_to (gpointer data);
+static gboolean cb_livePower_update_to (gpointer data);
+static gboolean cb_liveDutyCycle_update_to (gpointer data);
+static gboolean cb_state_update_to (gpointer data);
 static gboolean cb_spTemp_update_to (gpointer data);
 static gboolean cb_maxTemp_update_to (gpointer data);
 static gboolean cb_idleEnable_update_to (gpointer data);
@@ -357,29 +361,45 @@ static GtkWidget* priv_config_create (void)
 
 
 //  Update API
-#define gui_update(callback, value, logMsg) \
+
+#define gui_update_int(callback, value, logMsg) \
 ({ \
-	_LOG (4, #logMsg":  %u\n", value); \
+	_LOG (4, #logMsg":  %d\n", value); \
 	g_idle_add_full (G_PRIORITY_LOW, callback, (gpointer)(uintptr_t)value, NULL); \
 })
+#define gui_update_float(callback, value, logMsg) \
+({ \
+	_LOG (0, #logMsg":  %f\n", value); \
+	gpointer toSend; \
+	memcpy (&toSend, &value, sizeof (value)); \
+	g_idle_add_full (G_PRIORITY_LOW, callback, toSend, NULL); \
+})
+void gui_liveTemp_update (float newValue)
+	{  gui_update_float (cb_liveTemp_update_to, newValue, "Live Temp");  }
+void gui_livePower_update (uint16_t newValue)
+	{  gui_update_int (cb_livePower_update_to, newValue, "Live Power");  }
+void gui_liveDutyCycle_update (uint16_t newValue)
+	{  gui_update_int (cb_liveDutyCycle_update_to, newValue, "Live Duty Cycle");  }
+void gui_state_update (ironState newValue)
+	{  gui_update_int (cb_state_update_to, newValue, "State");  }
 void gui_spTemp_update (uint16_t newValue)
-	{  gui_update (cb_spTemp_update_to, newValue, "SP Temp");  }
+	{  gui_update_int (cb_spTemp_update_to, newValue, "SP Temp");  }
 void gui_maxTemp_update (uint16_t newValue)
-	{  gui_update (cb_maxTemp_update_to, newValue, "Max Temp");  }
+	{  gui_update_int (cb_maxTemp_update_to, newValue, "Max Temp");  }
 void gui_idleEnable_update (uint16_t newValue)
-	{  gui_update (cb_idleEnable_update_to, newValue, "Idle Enable");  }
+	{  gui_update_int (cb_idleEnable_update_to, newValue, "Idle Enable");  }
 void gui_idleTimer_update (uint16_t newValue)
-	{  gui_update (cb_idleTimer_update_to, newValue, "Idle Timer");  }
+	{  gui_update_int (cb_idleTimer_update_to, newValue, "Idle Timer");  }
 void gui_idleTemp_update (uint16_t newValue)
-	{  gui_update (cb_idleTemp_update_to, newValue, "Idle Temp");  }
+	{  gui_update_int (cb_idleTemp_update_to, newValue, "Idle Temp");  }
 void gui_sleepEnable_update (uint16_t newValue)
-	{  gui_update (cb_sleepEnable_update_to, newValue, "Sleep Enable");  }
+	{  gui_update_int (cb_sleepEnable_update_to, newValue, "Sleep Enable");  }
 void gui_sleepTimer_update (uint16_t newValue)
-	{  gui_update (cb_sleepTimer_update_to, newValue, "Sleep Timer");  }
+	{  gui_update_int (cb_sleepTimer_update_to, newValue, "Sleep Timer");  }
 void gui_units_update (uint16_t newValue)
-	{  gui_update (cb_units_update_to, newValue, "Units");  }
+	{  gui_update_int (cb_units_update_to, newValue, "Units");  }
 void gui_calTemp_update (int16_t newValue)
-	{  gui_update (cb_calTemp_update_to, newValue, "Calibration Temp");  }
+	{  gui_update_int (cb_calTemp_update_to, newValue, "Calibration Temp");  }
 
 
 //  *--</Main Code>--*  //
@@ -445,7 +465,7 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 }
 
 //  Helper functions for the Setter Buttons
-#define number_cmdSubmit_number(cmdType, theNumber) \
+#define number_cmdSubmit_int(cmdType, theNumber) \
 ({ \
 	ironCommand* ironCmd = malloc (sizeof (ironCommand)); \
 	_NULL_EXIT (ironCmd); \
@@ -453,7 +473,7 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 	snprintf (ironCmd -> params, SERIAL_PARAM_SIZE, "%d", theNumber); \
 	serial_cmd_submit (ironCmd); \
 })
-#define text_cmdSubmit_number(cmdType, theText, numType, numMin, numMax) \
+#define text_cmdSubmit_int(cmdType, theText, numType, numMin, numMax) \
 ({ \
 	GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (theText)); \
 	const char* text = gtk_entry_buffer_get_text (buffer); \
@@ -479,28 +499,28 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 //  Setter Buttons
 static void cb_btn_spTemp_set_clicked (GtkButton* theButton, gpointer data)
 {
-	text_cmdSubmit_number (ironCmdType_spTemp_set, text_spTemp_new,
+	text_cmdSubmit_int (ironCmdType_spTemp_set, text_spTemp_new,
 		uint16_t, 0, UINT16_MAX);
 }
 static void cb_btn_maxTemp_set_clicked (GtkButton* theButton, gpointer data)
 {
-	text_cmdSubmit_number (ironCmdType_maxTemp_set, text_maxTemp_new,
+	text_cmdSubmit_int (ironCmdType_maxTemp_set, text_maxTemp_new,
 		uint16_t, 0, UINT16_MAX);
 }
 static void cb_btn_idle_clicked (GtkButton* theButton, gpointer data)
 {
 	cmdSubmit_boolText (ironCmdType_idleEnable_set,
 		gtk_switch_get_state (GTK_SWITCH (sw_idleEnable_new)), "0", "1");
-	text_cmdSubmit_number (ironCmdType_idleTimer_set, text_idleTimer_new,
+	text_cmdSubmit_int (ironCmdType_idleTimer_set, text_idleTimer_new,
 		uint16_t, 0, UINT16_MAX);
-	text_cmdSubmit_number (ironCmdType_idleTemp_set, text_idleTemp_new,
+	text_cmdSubmit_int (ironCmdType_idleTemp_set, text_idleTemp_new,
 		uint16_t, 0, UINT16_MAX);
 }
 static void cb_btn_sleep_clicked (GtkButton* theButton, gpointer data)
 {
 	cmdSubmit_boolText (ironCmdType_sleepEnable_set,
 		gtk_switch_get_state (GTK_SWITCH (sw_sleepEnable_new)), "0", "1");
-	text_cmdSubmit_number (ironCmdType_sleepTimer_set, text_sleepTimer_new,
+	text_cmdSubmit_int (ironCmdType_sleepTimer_set, text_sleepTimer_new,
 		uint16_t, 0, UINT16_MAX);
 }
 static void cb_sw_units_stateSet (GtkSwitch* theSwitch, gboolean state, gpointer data)
@@ -510,7 +530,7 @@ static void cb_sw_units_stateSet (GtkSwitch* theSwitch, gboolean state, gpointer
 }
 static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data)
 {
-	text_cmdSubmit_number (ironCmdType_calTemp_set, text_calTemp_new,
+	text_cmdSubmit_int (ironCmdType_calTemp_set, text_calTemp_new,
 		int16_t, INT16_MIN, INT16_MAX);
 }
 
@@ -521,12 +541,12 @@ static void cb_btn_reset_clicked (GtkButton* theButton, gpointer data)
 	cmdSubmit_boolText (ironCmdType_units_set, GUI_UNIT_CELSIUS_DEFAULT, "F", "C");
 	cmdSubmit_boolText (ironCmdType_idleEnable_set, GUI_IDLE_ENABLE_DEFAULT, "0", "1");
 	cmdSubmit_boolText (ironCmdType_sleepEnable_set, GUI_SLEEP_ENABLE_DEFAULT, "0", "1");
-	number_cmdSubmit_number (ironCmdType_spTemp_set, GUI_SP_TEMP_DEFAULT);
-	number_cmdSubmit_number (ironCmdType_maxTemp_set, GUI_MAX_TEMP_DEFAULT);
-	number_cmdSubmit_number (ironCmdType_idleTimer_set, GUI_IDLE_TIMER_DEFAULT);
-	number_cmdSubmit_number (ironCmdType_idleTemp_set, GUI_IDLE_TEMP_DEFAULT);
-	number_cmdSubmit_number (ironCmdType_sleepTimer_set, GUI_SLEEP_ENABLE_TIMER);
-	number_cmdSubmit_number (ironCmdType_calTemp_set, GUI_CAL_TEMP_DEFAULT);
+	number_cmdSubmit_int (ironCmdType_spTemp_set, GUI_SP_TEMP_DEFAULT);
+	number_cmdSubmit_int (ironCmdType_maxTemp_set, GUI_MAX_TEMP_DEFAULT);
+	number_cmdSubmit_int (ironCmdType_idleTimer_set, GUI_IDLE_TIMER_DEFAULT);
+	number_cmdSubmit_int (ironCmdType_idleTemp_set, GUI_IDLE_TEMP_DEFAULT);
+	number_cmdSubmit_int (ironCmdType_sleepTimer_set, GUI_SLEEP_ENABLE_TIMER);
+	number_cmdSubmit_int (ironCmdType_calTemp_set, GUI_CAL_TEMP_DEFAULT);
 
 	//  Set the switch states.
 	gui_sw_idleEnable_forceState (GUI_IDLE_ENABLE_DEFAULT);
@@ -540,10 +560,19 @@ static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 
 
 //  Helper functions for the Update Timeouts
-#define label_update_number(theLabel, theNumber, numType) \
+#define label_update_int(theLabel, theNumber, numType) \
 ({ \
 	char updateText [LABEL_LEN_NUMBER]; \
 	snprintf (updateText, LABEL_LEN_NUMBER, "%d", (numType)(uintptr_t)theNumber); \
+	gtk_label_set_text (GTK_LABEL (theLabel), updateText); \
+	return 0; \
+})
+#define label_update_float(theLabel, theNumber, numType) \
+({ \
+	numType toRecv; \
+	memcpy (&toRecv, &theNumber, sizeof (toRecv)); \
+	char updateText [LABEL_LEN_NUMBER]; \
+	snprintf (updateText, LABEL_LEN_NUMBER, "%.2f", toRecv); \
 	gtk_label_set_text (GTK_LABEL (theLabel), updateText); \
 	return 0; \
 })
@@ -565,18 +594,40 @@ static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 })
 
 //  Update Timeouts
+static gboolean cb_liveTemp_update_to (gpointer data)
+	{  label_update_float (label_liveTemp, data, float);  }
+//#  I believe this is the tip's maximum power.  If this is the case, we should consider multiplying this value by the DC and displaying that instead.  We could maybe move the Max Power to the "Aux" section.
+static gboolean cb_livePower_update_to (gpointer data)
+	{  label_update_int (label_livePower, data, uint16_t);  }
+static gboolean cb_liveDutyCycle_update_to (gpointer data)
+	{  label_update_int (label_liveDutyCycle, data, uint16_t);  }
+static gboolean cb_state_update_to (gpointer data)
+{
+	char* updateText = NULL;
+	switch ((ironState)data)
+	{
+		case ironState_veryOff:
+			updateText = "Very off...";
+			break;
+		default:
+			updateText = TEXT_CORE_STATE_UNKNOWN;
+			break;
+	}
+	gtk_label_set_text (GTK_LABEL (label_state), updateText);
+	return 0;
+}
 static gboolean cb_spTemp_update_to (gpointer data)
-	{  label_update_number (label_spTemp_curr, data, uint16_t);  }
+	{  label_update_int (label_spTemp_curr, data, uint16_t);  }
 static gboolean cb_maxTemp_update_to (gpointer data)
-	{  label_update_number (label_maxTemp_curr, data, uint16_t);  }
+	{  label_update_int (label_maxTemp_curr, data, uint16_t);  }
 static gboolean cb_idleTimer_update_to (gpointer data)
-	{  label_update_number (label_idleTimer_curr, data, uint16_t);  }
+	{  label_update_int (label_idleTimer_curr, data, uint16_t);  }
 static gboolean cb_idleTemp_update_to (gpointer data)
-	{  label_update_number (label_idleTemp_curr, data, uint16_t);  }
+	{  label_update_int (label_idleTemp_curr, data, uint16_t);  }
 static gboolean cb_sleepTimer_update_to (gpointer data)
-	{  label_update_number (label_sleepTimer_curr, data, uint16_t);  }
+	{  label_update_int (label_sleepTimer_curr, data, uint16_t);  }
 static gboolean cb_calTemp_update_to (gpointer data)
-	{  label_update_number (label_calTemp_curr, data, int16_t);  }
+	{  label_update_int (label_calTemp_curr, data, int16_t);  }
 
 static gboolean cb_idleEnable_update_to (gpointer eND)
 	{  label_update_boolText (label_idleEnable_curr, eND, TEXT_DISABLED, TEXT_ENABLED);  }

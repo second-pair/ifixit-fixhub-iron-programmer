@@ -47,7 +47,14 @@
 //  Global Enumerations
 typedef enum ironState
 {
-	ironState_veryOff
+	ironState_switchOff,
+	ironState_noTip,
+	ironState_sleep,
+	ironState_idle,
+	ironState_heating,
+	ironState_cooling,
+	ironState_atTarget,
+	ironState_unknown
 } ironState;
 
 //  Global Structures

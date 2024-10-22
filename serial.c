@@ -113,6 +113,10 @@ static void priv_serRoutine_next (void);
 //  Buffer manipulation functions.
 static inline uint16_t priv_buff_skipLines (uint8_t** start, uint16_t skips, int buffLen);
 static inline uint16_t priv_buff_skipChars (uint8_t** start, uint16_t skips, int buffLen);
+static inline uint16_t priv_buff_skipLinesAndChars (uint8_t** start, uint16_t lineSkips, uint16_t charSkips, int buffLen);
+static inline uint16_t priv_buff_findParamLen (uint8_t** start, int buffLen);
+static inline void priv_buff_copyNextParam (uint8_t** start, int buffLen, char* buffDest);
+static inline void skipToParamAndExtract_str (uint8_t** start, uint16_t lineSkips, uint16_t charSkips, int* buffLen, char* buffDest);
 
 
 //  Getter functions.
@@ -538,11 +542,48 @@ static inline uint16_t priv_buff_skipChars (uint8_t** start, uint16_t skips, int
 	(*start) += stt;
 	return stt;
 }
+static inline uint16_t priv_buff_skipLinesAndChars (uint8_t** start, uint16_t lineSkips, uint16_t charSkips, int buffLen)
+{
+	uint16_t total = 0;
+	total += priv_buff_skipLines (start, lineSkips, buffLen);
+	total += priv_buff_skipChars (start, charSkips, buffLen);
+	return total;
+}
+static inline uint16_t priv_buff_findParamLen (uint8_t** start, int buffLen)
+{
+	uint16_t stt = 0;
+	//  Find the next newline.
+	for (; (*start) [stt] != '\r' && (*start) [stt] != '\n' && (*start) [stt] != '\0' && stt < buffLen; stt ++) {}
+	return stt;
+}
+static inline void priv_buff_copyNextParam (uint8_t** start, int buffLen, char* buffDest)
+{
+	uint16_t paramLen = priv_buff_findParamLen (start, buffLen);
+	memcpy (buffDest, *start, paramLen);
+	buffDest [paramLen] = '\0';
+}
+static inline void skipToParamAndExtract_str (uint8_t** start, uint16_t lineSkips, uint16_t charSkips, int* buffLen, char* buffDest)
+{
+	*buffLen -= priv_buff_skipLinesAndChars (start, lineSkips, charSkips, *buffLen);
+	priv_buff_copyNextParam (start, *buffLen, buffDest);
+}
+#define skipToParamAndExtract_float(start, lineSkips, charSkips, buffLen, type, capMin, capMax) \
+({ \
+	buffLen -= priv_buff_skipLinesAndChars (&start, lineSkips, charSkips, buffLen); \
+	type value = strtof ((char*)start, NULL); \
+	_CAP_RANGE (1, "%f", value, capMin, capMax); \
+	value; \
+})
+#define skipToParamAndExtract_int(start, lineSkips, charSkips, buffLen, type, capMin, capMax) \
+({ \
+	buffLen -= priv_buff_skipLinesAndChars (&start, lineSkips, charSkips, buffLen); \
+	type value = strtol ((char*)start, NULL, 10); \
+	_CAP_RANGE (1, "%d", value, capMin, capMax); \
+	value; \
+})
 
 
 //  Getter functions.
-
-//#define priv_get_parse_skipLines()
 
 #define priv_get(nameLower, nameUpper, type, maxBound) \
 ({ \
@@ -592,39 +633,85 @@ static inline void priv_heaterDetails_get (void)
 		return;
 	}
 	_LOG (5, "Heater Details:\n\n%s\n", start);
+
 	/*  Parse the information.
 	06:  | current filtered temp: 22.28 C|
 	10:  |          tip power mW: 2250|
+	11:  |  pid output desired W: 0|
 	12:  |        pwm duty cycle: 100|
-	13:  |            switch on?: Yes|
-	14:  |        tip installed?: Yes|
-	15:  |                 state: Active|
+	13:  |            switch on?: No|Yes|
+	14:  |        tip installed?: No|Yes|
+	15:  |                 state: Off|Active|
+	No Yes Off  //  Switch Off
+	Yes Yes Off  //  Switch On, no Heat - "Sleep"
+	Yes Yes Active  //  Heating - "Active"
 	*/
-	amount -= priv_buff_skipLines (&start, 5, amount);
-	amount -= priv_buff_skipChars (&start, 24, amount);
-	float liveTemp = strtof ((char*)start, NULL);
-	_CAP_RANGE (1, "%f", liveTemp, 0.0, 10000.0);
-	gui_liveTemp_update (liveTemp);
-	amount -= priv_buff_skipLines (&start, 4, amount);
-	amount -= priv_buff_skipChars (&start, 24, amount);
-	int livePower = strtol ((char*)start, NULL, 10);
-	_CAP_RANGE (1, "%u", livePower, 0, UINT16_MAX);
-	gui_livePower_update (livePower);
-	amount -= priv_buff_skipLines (&start, 2, amount);
-	amount -= priv_buff_skipChars (&start, 24, amount);
-	int liveDutyCycle = strtol ((char*)start, NULL, 10);
-	_CAP_RANGE (1, "%u", liveDutyCycle, 0, UINT16_MAX);
-	gui_liveDutyCycle_update (liveDutyCycle);
-	amount -= priv_buff_skipLines (&start, 1, amount);
-	amount -= priv_buff_skipChars (&start, 24, amount);
-	//_LOG (0, "Heater Details:\n\n%6s\n", start);
-	amount -= priv_buff_skipLines (&start, 1, amount);
-	amount -= priv_buff_skipChars (&start, 24, amount);
-	//_LOG (0, "Heater Details:\n\n%6s\n", start);
-	amount -= priv_buff_skipLines (&start, 1, amount);
-	amount -= priv_buff_skipChars (&start, 24, amount);
-	//_LOG (0, "Heater Details:\n\n%6s\n", start);
-	gui_state_update (ironState_veryOff);
+
+	//  Live Temp
+	gui_liveTemp_update (skipToParamAndExtract_float
+		(start, 5, 24, amount, float, 0.0, 10000.0));
+	//  Live Power
+	gui_livePower_update (skipToParamAndExtract_int
+		(start, 5, 24, amount, uint16_t, 0, UINT16_MAX));
+	//  Live DC
+	gui_liveDutyCycle_update (skipToParamAndExtract_int
+		(start, 1, 24, amount, uint16_t, 0, UINT16_MAX));
+
+	char buffState [SERIAL_PARAM_SIZE];
+	//  State - Switch Off
+	skipToParamAndExtract_str (&start, 1, 24, &amount, buffState);
+	if (_STRING_COMPARE (buffState, "No"))
+	{
+		gui_state_update (ironState_switchOff);
+		return;
+	}
+	else if (! _STRING_COMPARE (buffState, "Yes"))
+	{
+		_LOG (0, "Unknown State:  |%s|\n", start);
+		gui_state_update (ironState_unknown);
+		return;
+	}
+	//  State - No Tip
+	skipToParamAndExtract_str (&start, 1, 24, &amount, buffState);
+	if (_STRING_COMPARE (buffState, "No"))
+	{
+		gui_state_update (ironState_noTip);
+		return;
+	}
+	else if (! _STRING_COMPARE (buffState, "Yes"))
+	{
+		_LOG (0, "Unknown State:  |%s|\n", start);
+		gui_state_update (ironState_unknown);
+		return;
+	}
+	//  State - State
+	skipToParamAndExtract_str (&start, 1, 24, &amount, buffState);
+	if (_STRING_COMPARE (buffState, "Off"))
+	{
+		gui_state_update (ironState_sleep);
+		return;
+	}
+	else if (_STRING_COMPARE (buffState, "Active"))
+	{
+		gui_state_update (ironState_heating);
+		return;
+	}
+	else if (_STRING_COMPARE (buffState, "Idle"))
+	{
+		gui_state_update (ironState_idle);
+		return;
+	}
+	else if (_STRING_COMPARE (buffState, "Sleep"))
+	{
+		gui_state_update (ironState_sleep);
+		return;
+	}
+	else
+	{
+		_LOG (0, "Unknown State:  |%s|\n", start);
+		gui_state_update (ironState_unknown);
+		return;
+	}
 }
 
 static inline int8_t priv_idleEnable_get (void)

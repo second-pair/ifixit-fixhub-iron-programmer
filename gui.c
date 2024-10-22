@@ -92,19 +92,19 @@ static void cb_btn_sleep_clicked (GtkButton* theButton, gpointer data);
 static void cb_sw_units_stateSet (GtkSwitch* theSwitch, gboolean state, gpointer data);
 static void cb_btn_calTemp_clicked (GtkButton* theButton, gpointer data);
 
-static gboolean cb_liveTemp_update_to (gpointer data);
-static gboolean cb_livePower_update_to (gpointer data);
-static gboolean cb_liveDutyCycle_update_to (gpointer data);
+static gboolean cb_liveTemp_update_to (gpointer data);  //  C or F
+static gboolean cb_livePower_update_to (gpointer data);  //  W
+static gboolean cb_liveDutyCycle_update_to (gpointer data);  //  %
 static gboolean cb_state_update_to (gpointer data);
-static gboolean cb_spTemp_update_to (gpointer data);
-static gboolean cb_maxTemp_update_to (gpointer data);
+static gboolean cb_spTemp_update_to (gpointer data);  //  C or F
+static gboolean cb_maxTemp_update_to (gpointer data);  //  C or F
 static gboolean cb_idleEnable_update_to (gpointer data);
-static gboolean cb_idleTimer_update_to (gpointer data);
-static gboolean cb_idleTemp_update_to (gpointer data);
+static gboolean cb_idleTimer_update_to (gpointer data);  //  S
+static gboolean cb_idleTemp_update_to (gpointer data);  //  C or F
 static gboolean cb_sleepEnable_update_to (gpointer data);
-static gboolean cb_sleepTimer_update_to (gpointer data);
+static gboolean cb_sleepTimer_update_to (gpointer data);  //  S
 static gboolean cb_units_update_to (gpointer data);
-static gboolean cb_calTemp_update_to (gpointer data);
+static gboolean cb_calTemp_update_to (gpointer data);  //  C or F
 
 //  *--</Preparations>--*  //
 
@@ -369,7 +369,7 @@ static GtkWidget* priv_config_create (void)
 })
 #define gui_update_float(callback, value, logMsg) \
 ({ \
-	_LOG (0, #logMsg":  %f\n", value); \
+	_LOG (4, #logMsg":  %f\n", value); \
 	gpointer toSend; \
 	memcpy (&toSend, &value, sizeof (value)); \
 	g_idle_add_full (G_PRIORITY_LOW, callback, toSend, NULL); \
@@ -596,21 +596,42 @@ static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 //  Update Timeouts
 static gboolean cb_liveTemp_update_to (gpointer data)
 	{  label_update_float (label_liveTemp, data, float);  }
-//#  I believe this is the tip's maximum power.  If this is the case, we should consider multiplying this value by the DC and displaying that instead.  We could maybe move the Max Power to the "Aux" section.
 static gboolean cb_livePower_update_to (gpointer data)
 	{  label_update_int (label_livePower, data, uint16_t);  }
 static gboolean cb_liveDutyCycle_update_to (gpointer data)
 	{  label_update_int (label_liveDutyCycle, data, uint16_t);  }
 static gboolean cb_state_update_to (gpointer data)
 {
+	//#  Consider doing some runtime temperature analysis to determine the missing states.
 	char* updateText = NULL;
 	switch ((ironState)data)
 	{
-		case ironState_veryOff:
-			updateText = "Very off...";
+		case ironState_switchOff:
+			updateText = TEXT_CORE_STATE_SWITCH_OFF;
+			break;
+		case ironState_noTip:
+			updateText = TEXT_CORE_STATE_NO_TIP;
+			break;
+		case ironState_sleep:
+			updateText = TEXT_CORE_STATE_SLEEP;
+			break;
+		case ironState_idle:
+			updateText = TEXT_CORE_STATE_IDLE;
+			break;
+		case ironState_heating:
+			updateText = TEXT_CORE_STATE_HEATING;
+			break;
+		case ironState_cooling:
+			updateText = TEXT_CORE_STATE_SOOLING;
+			break;
+		case ironState_atTarget:
+			updateText = TEXT_CORE_STATE_AT_TARGET;
+			break;
+		case ironState_unknown:
+			updateText = TEXT_CORE_STATE_UNKNOWN;
 			break;
 		default:
-			updateText = TEXT_CORE_STATE_UNKNOWN;
+			updateText = TEXT_CORE_STATE_UNHANDLED;
 			break;
 	}
 	gtk_label_set_text (GTK_LABEL (label_state), updateText);

@@ -100,9 +100,7 @@ static gboolean cb_state_update_to (gpointer data);
 static gboolean cb_spTemp_update_to (gpointer data);  //  C or F
 static gboolean cb_maxTemp_update_to (gpointer data);  //  C or F
 static gboolean cb_uptime_update_to (gpointer data);  //  mS -> float S
-//prolly accel_x  //  m/s^2?
-//prolly accel_y  //  m/s^2?
-//prolly accel_z  //  m/s^2?
+static gboolean cb_accelerometer_update_to (gpointer data);  //  Raw -> m/s^2?
 static gboolean cb_idleEnable_update_to (gpointer data);
 static gboolean cb_idleTimer_update_to (gpointer data);  //  S
 static gboolean cb_idleTemp_update_to (gpointer data);  //  C or F
@@ -400,9 +398,14 @@ void gui_idleEnable_update (uint16_t newValue)
 	{  gui_update_int (cb_idleEnable_update_to, newValue, "Idle Enable");  }
 void gui_uptime_update (uint64_t newValue)
 	{  gui_update_u64 (cb_uptime_update_to, newValue, "Uptime");  }
-//prolly accel_x
-//prolly accel_y
-//prolly accel_z
+void gui_accelerometer_update (AccelRaw aRaw)
+{
+	_LOG (4, "Accelerometer:  %d %d %d %d\n",
+		aRaw .aX, aRaw .aY, aRaw .aZ, aRaw .aMag);
+	uint64_t aEncode;
+	memcpy (&aEncode, &aRaw, sizeof (aEncode));
+	g_idle_add_full (G_PRIORITY_LOW, cb_accelerometer_update_to, (gpointer)aEncode, NULL);
+}
 void gui_idleTimer_update (uint16_t newValue)
 	{  gui_update_int (cb_idleTimer_update_to, newValue, "Idle Timer");  }
 void gui_idleTemp_update (uint16_t newValue)
@@ -671,7 +674,9 @@ static gboolean cb_calTemp_update_to (gpointer data)
 static gboolean cb_uptime_update_to (gpointer data)
 {
 	uint64_t time_ms = (uint64_t)data;
+	//  Float-ify & scale to seconds.
 	double time_s = (double)time_ms / 1000.0;
+	//  Format as D-H-M-S.
 	char updateText [LABEL_LEN_TIME];
 	snprintf (updateText, LABEL_LEN_TIME, "%ud %02u:%02u:%02u", \
 		(uint8_t)(time_s / 86400), \
@@ -679,15 +684,24 @@ static gboolean cb_uptime_update_to (gpointer data)
 		(uint8_t)(fmod (time_s, 3600) / 60), \
 		(uint8_t)(fmod (time_s, 60)) \
 	);
-
-
+	//  Update the label.
 	gtk_label_set_text (GTK_LABEL (label_uptime), updateText);
-	//and format as time.
 	return 0;
 }
-//prolly accel_x
-//prolly accel_y
-//prolly accel_z
+static gboolean cb_accelerometer_update_to (gpointer data)
+{
+	uint64_t aEncode = (uint64_t)data;
+	AccelRaw aRaw;
+	memcpy (&aRaw, &aEncode, sizeof (aRaw));
+	float accelX = (float)aRaw .aX * IRON_ACCEL_FACTOR;
+	float accelY = (float)aRaw .aY * IRON_ACCEL_FACTOR;
+	float accelZ = (float)aRaw .aZ * IRON_ACCEL_FACTOR;
+	float accelM = (float)aRaw .aMag * IRON_ACCEL_FACTOR;
+
+	//gtk_label_set_text (GTK_LABEL (label_uptime), updateText);
+	printf ("X %f   Y %f   Z %f   M %f\n", accelX, accelY, accelZ, accelM);
+	return 0;
+}
 static gboolean cb_idleEnable_update_to (gpointer eND)
 	{  label_update_boolText (label_idleEnable_curr, eND, TEXT_DISABLED, TEXT_ENABLED);  }
 static gboolean cb_sleepEnable_update_to (gpointer eND)

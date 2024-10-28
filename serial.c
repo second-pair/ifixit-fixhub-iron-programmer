@@ -23,7 +23,7 @@
 //  Defines
 #define WAIT_COUNT 100
 #define WAIT_SLEEP_MS 1
-#define THREAD_SLEEP_MS (333 / SERIAL_IRON_GET_TYPE_MAX)
+#define THREAD_SLEEP_MS 0// (333 / SERIAL_IRON_GET_TYPE_MAX)
 #define THREAD_QUEUE_WAIT_MS 1
 
 //  Serial port config.
@@ -118,6 +118,7 @@ static inline uint16_t priv_buff_skipLines (uint8_t** start, uint16_t skips, int
 static inline uint16_t priv_buff_skipChars (uint8_t** start, uint16_t skips, int buffLen);
 static inline uint16_t priv_buff_skipLinesAndChars (uint8_t** start, uint16_t lineSkips, uint16_t charSkips, int buffLen);
 static inline uint16_t priv_buff_findParamLen (uint8_t** start, int buffLen);
+static inline uint16_t priv_buff_skipNextParam (uint8_t** start, int buffLen);
 static inline void priv_buff_copyNextParam (uint8_t** start, int buffLen, char* buffDest);
 static inline void skipToParamAndExtract_str (uint8_t** start, uint16_t lineSkips, uint16_t charSkips, int* buffLen, char* buffDest);
 
@@ -572,8 +573,21 @@ static inline uint16_t priv_buff_findParamLen (uint8_t** start, int buffLen)
 {
 	uint16_t stt = 0;
 	//  Find the next newline.
-	for (; (*start) [stt] != '\r' && (*start) [stt] != '\n' && (*start) [stt] != '\0' && stt < buffLen; stt ++) {}
+	for
+	(;
+		(*start) [stt] != '\r' && (*start) [stt] != '\n' &&
+		(*start) [stt] != ',' && (*start) [stt] != '\0' &&
+		stt < buffLen;
+		stt ++
+	) {}
 	return stt;
+}
+static inline uint16_t priv_buff_skipNextParam (uint8_t** start, int buffLen)
+{
+	uint16_t toSkip = priv_buff_findParamLen (start, buffLen);
+	if ((*start) [0] != '\0')
+		(*start) ++;
+	return priv_buff_skipChars (start, toSkip, buffLen);
 }
 static inline void priv_buff_copyNextParam (uint8_t** start, int buffLen, char* buffDest)
 {
@@ -638,6 +652,7 @@ static inline void priv_version_get (void)
 	}
 	//  Parse the information.
 	_LOG (5, "Version:\n%s\n", start);
+	//gui_version_update ();
 }
 
 static inline void priv_heaterDetails_get (void)
@@ -735,8 +750,38 @@ static inline void priv_heaterDetails_get (void)
 
 static inline void priv_accelerometer_get (void)
 {
-	_LOG (0, "Here.\n");
-	//gui_accelerometer_update ();
+	//  Get the information.
+	uint8_t buffRead [SERIAL_BUFF_SIZE];
+	uint8_t* start;
+	int amount = priv_read_skipEchoBack (buffRead, CMD_ACCELEROMETER_GET, CMD_ACCELEROMETER_GET_LEN, &start);
+	if (amount < 0)
+	{
+		_LOG (1, "No data received!  Returning...\n");
+		return;
+	}
+	_LOG (5, "Accelerometer:\n%s\n", start);
+
+	/*  Parse the information.
+	MXC4005 Datasheet:  https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/323/MXC400xXC_Rev.B_4-24-15.pdf
+	See drawing.ext.
+	With the iron orientated horizontally, tip away from you & clip pointing upwards:
+	 -  X-axis points away form you - in the direction of the tip.
+	 -  Y-axis points to the left, parpendicular to the direction of the tip.
+	 -  Z-axis points upwards, "coming out" of the clip.
+	2,894,-830,1219 -> X-Axis,Y-Axis,Z-Axis,Magnitude
+	I set 'THREAD_SLEEP_MS' to 0 and logged the magnitude for 5 minutes.  The average value of this was:  1232.12112010796.
+	Assuming gravitational acceleration of 9.81m/s/s, we can derive a conversion factor - `IRON_ACCEL_FACTOR = g / avg` - defined in 'includes.h'.
+	A 16-bit integer can store `INT16_MAX/1233` = 26.6 g.  Given the chip's maximum sensitivity of +/-8g, this is more than enough to handle any overreads.
+	*/
+	AccelRaw aRaw;
+	aRaw .aX = _STR_TO_B10_TYPE (1, start, int16_t, INT64_MIN, INT64_MAX);
+	amount -= priv_buff_skipNextParam (&start, amount);
+	aRaw .aY = _STR_TO_B10_TYPE (1, start, int16_t, INT64_MIN, INT64_MAX);
+	amount -= priv_buff_skipNextParam (&start, amount);
+	aRaw .aZ = _STR_TO_B10_TYPE (1, start, int16_t, INT64_MIN, INT64_MAX);
+	amount -= priv_buff_skipNextParam (&start, amount);
+	aRaw .aMag = _STR_TO_B10_TYPE (1, start, int16_t, INT64_MIN, INT64_MAX);
+	gui_accelerometer_update (aRaw);
 }
 
 static inline int8_t priv_idleEnable_get (void)

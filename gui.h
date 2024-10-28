@@ -75,6 +75,7 @@ void gui_state_update (ironState newValue);
 void gui_spTemp_update (uint16_t newValue);
 void gui_maxTemp_update (uint16_t newValue);
 void gui_uptime_update (uint64_t newValue);
+void gui_accelerometer_update (AccelRaw aRaw);
 //prolly accel_x
 //prolly accel_y
 //prolly accel_z

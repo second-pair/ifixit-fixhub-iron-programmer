@@ -34,6 +34,19 @@
 #define GUI_WINDOW_SIZE_W 640
 #define GUI_WINDOW_SIZE_H 480
 
+//  Parameters
+#define IRON_ACCEL_FACTOR (9.81f / 1232.12112010796f)
+
+//  Structures
+#include <stdint.h>
+typedef struct AccelRaw
+{
+	int16_t aX;
+	int16_t aY;
+	int16_t aZ;
+	int16_t aMag;
+} __attribute__ ((packed)) AccelRaw;
+
 //  *--</Defines>--*  //
 
 

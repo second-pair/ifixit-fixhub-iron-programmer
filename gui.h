@@ -74,6 +74,10 @@ void gui_liveDutyCycle_update (uint16_t newValue);
 void gui_state_update (ironState newValue);
 void gui_spTemp_update (uint16_t newValue);
 void gui_maxTemp_update (uint16_t newValue);
+void gui_uptime_update (uint64_t newValue);
+//prolly accel_x
+//prolly accel_y
+//prolly accel_z
 void gui_idleEnable_update (uint16_t newValue);
 void gui_idleTimer_update (uint16_t newValue);
 void gui_idleTemp_update (uint16_t newValue);

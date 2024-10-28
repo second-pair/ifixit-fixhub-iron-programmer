@@ -87,7 +87,7 @@ int main (int argc, char** argv)
 	#if (defined _WIN32 || defined _WINDOWS || defined __CYGWIN__ || defined __NT__)
 		//  Windows can't speak 'sigaction'.
 		signal (SIGINT, cb_signal_terminate);
-		signal (SIGQUIT, cb_signal_terminate);
+		//signal (SIGQUIT, cb_signal_terminate);
 		signal (SIGABRT, cb_signal_terminate);
 		signal (SIGTERM, cb_signal_terminate);
 	#else

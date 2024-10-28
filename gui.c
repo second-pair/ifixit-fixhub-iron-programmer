@@ -22,6 +22,7 @@
 
 //  Defines
 #define LABEL_LEN_NUMBER 16
+#define LABEL_LEN_TIME 20  //  "%ud %02u:%02u:%04.2lf"  "%ud %02u:%02u:%02u"
 //  https://stackoverflow.com/a/240370
 #define STRINGIFY(x) #x
 #define TOSTR(x) STRINGIFY(x)
@@ -98,6 +99,10 @@ static gboolean cb_liveDutyCycle_update_to (gpointer data);  //  %
 static gboolean cb_state_update_to (gpointer data);
 static gboolean cb_spTemp_update_to (gpointer data);  //  C or F
 static gboolean cb_maxTemp_update_to (gpointer data);  //  C or F
+static gboolean cb_uptime_update_to (gpointer data);  //  mS -> float S
+//prolly accel_x  //  m/s^2?
+//prolly accel_y  //  m/s^2?
+//prolly accel_z  //  m/s^2?
 static gboolean cb_idleEnable_update_to (gpointer data);
 static gboolean cb_idleTimer_update_to (gpointer data);  //  S
 static gboolean cb_idleTemp_update_to (gpointer data);  //  C or F
@@ -367,6 +372,11 @@ static GtkWidget* priv_config_create (void)
 	_LOG (4, #logMsg":  %d\n", value); \
 	g_idle_add_full (G_PRIORITY_LOW, callback, (gpointer)(uintptr_t)value, NULL); \
 })
+#define gui_update_u64(callback, value, logMsg) \
+({ \
+	_LOG (4, #logMsg":  %ju\n", value); \
+	g_idle_add_full (G_PRIORITY_LOW, callback, (gpointer)(uintptr_t)value, NULL); \
+})
 #define gui_update_float(callback, value, logMsg) \
 ({ \
 	_LOG (4, #logMsg":  %f\n", value); \
@@ -388,6 +398,11 @@ void gui_maxTemp_update (uint16_t newValue)
 	{  gui_update_int (cb_maxTemp_update_to, newValue, "Max Temp");  }
 void gui_idleEnable_update (uint16_t newValue)
 	{  gui_update_int (cb_idleEnable_update_to, newValue, "Idle Enable");  }
+void gui_uptime_update (uint64_t newValue)
+	{  gui_update_u64 (cb_uptime_update_to, newValue, "Uptime");  }
+//prolly accel_x
+//prolly accel_y
+//prolly accel_z
 void gui_idleTimer_update (uint16_t newValue)
 	{  gui_update_int (cb_idleTimer_update_to, newValue, "Idle Timer");  }
 void gui_idleTemp_update (uint16_t newValue)
@@ -477,10 +492,7 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 ({ \
 	GtkEntryBuffer* buffer = gtk_text_get_buffer (GTK_TEXT (theText)); \
 	const char* text = gtk_entry_buffer_get_text (buffer); \
-	int decode = strtol (text, NULL, 10); \
-	if (decode < numMin) decode = numMin; \
-	if (decode > numMax) decode = numMax; \
-	numType newSp = (numType)decode; \
+	numType newSp = _STR_TO_B10_TYPE (3, text, numType, numMin, numMax); \
 	ironCommand* ironCmd = malloc (sizeof (ironCommand)); \
 	_NULL_EXIT (ironCmd); \
 	ironCmd -> type = cmdType; \
@@ -567,6 +579,13 @@ static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 	gtk_label_set_text (GTK_LABEL (theLabel), updateText); \
 	return 0; \
 })
+#define label_update_u64(theLabel, theNumber) \
+({ \
+	char updateText [LABEL_LEN_NUMBER]; \
+	snprintf (updateText, LABEL_LEN_NUMBER, "%ju", (uint64_t)(uintptr_t)theNumber); \
+	gtk_label_set_text (GTK_LABEL (theLabel), updateText); \
+	return 0; \
+})
 #define label_update_float(theLabel, theNumber, numType) \
 ({ \
 	numType toRecv; \
@@ -649,7 +668,26 @@ static gboolean cb_sleepTimer_update_to (gpointer data)
 	{  label_update_int (label_sleepTimer_curr, data, uint16_t);  }
 static gboolean cb_calTemp_update_to (gpointer data)
 	{  label_update_int (label_calTemp_curr, data, int16_t);  }
+static gboolean cb_uptime_update_to (gpointer data)
+{
+	uint64_t time_ms = (uint64_t)data;
+	double time_s = (double)time_ms / 1000.0;
+	char updateText [LABEL_LEN_TIME];
+	snprintf (updateText, LABEL_LEN_TIME, "%ud %02u:%02u:%02u", \
+		(uint8_t)(time_s / 86400), \
+		(uint8_t)(fmod (time_s, 86400) / 3600), \
+		(uint8_t)(fmod (time_s, 3600) / 60), \
+		(uint8_t)(fmod (time_s, 60)) \
+	);
 
+
+	gtk_label_set_text (GTK_LABEL (label_uptime), updateText);
+	//and format as time.
+	return 0;
+}
+//prolly accel_x
+//prolly accel_y
+//prolly accel_z
 static gboolean cb_idleEnable_update_to (gpointer eND)
 	{  label_update_boolText (label_idleEnable_curr, eND, TEXT_DISABLED, TEXT_ENABLED);  }
 static gboolean cb_sleepEnable_update_to (gpointer eND)

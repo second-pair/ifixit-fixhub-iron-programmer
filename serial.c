@@ -58,12 +58,14 @@
 #define CMD_VERSION_GET_LEN 8
 #define CMD_HEATER_DETAILS_GET "heater details\n"
 #define CMD_HEATER_DETAILS_GET_LEN 15
-#define CMD_HEATER_DETAILS_GET "heater details\n"
-#define CMD_HEATER_DETAILS_GET_LEN 15
+#define CMD_ACCELEROMETER_GET "mxc4005 magnitude\n"
+#define CMD_ACCELEROMETER_GET_LEN 18
 #define CMD_SP_TEMP_GET "settings get activetemp\n"
 #define CMD_SP_TEMP_GET_LEN CMD_SP_TEMP_SET_LEN+1
 #define CMD_MAX_TEMP_GET "settings get maxtemp\n"
 #define CMD_MAX_TEMP_GET_LEN CMD_MAX_TEMP_SET_LEN+1
+#define CMD_UPTIME_GET "uptime\n"
+#define CMD_UPTIME_GET_LEN 7
 #define CMD_IDLE_ENABLE_GET "settings get idletimerenable\n"
 #define CMD_IDLE_ENABLE_GET_LEN CMD_IDLE_ENABLE_SET_LEN+1
 #define CMD_IDLE_TIMER_GET "settings get idletimer\n"
@@ -101,6 +103,7 @@ sig_atomic_t thread_run = 0;
 static inline int priv_read (uint8_t* buffRead, const char* cmdStr, uint16_t length);
 static inline int priv_read_skipEchoBack (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
 static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmdStr, uint16_t length, uint8_t** start);
+static inline uint64_t priv_read_uint64_t (uint8_t* buffRead, const char* cmdStr, uint16_t length);
 static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length);
 static inline uint16_t priv_read_uint16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length);
 static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, const char* params);
@@ -122,8 +125,10 @@ static inline void skipToParamAndExtract_str (uint8_t** start, uint16_t lineSkip
 //  Getter functions.
 static inline void priv_version_get (void);
 static inline void priv_heaterDetails_get (void);
+static inline void priv_accelerometer_get (void);
 static inline void priv_spTemp_get (void);
 static inline void priv_maxTemp_get (void);
+static inline void priv_uptime_get (void);
 static inline int8_t priv_idleEnable_get (void);
 static inline void priv_idleTimer_get (void);
 static inline void priv_idleTemp_get (void);
@@ -310,6 +315,16 @@ static inline int priv_read_oneliner (uint8_t* buffRead, const char* cmdStr, uin
 }
 
 //  `priv_read_oneliner ()`, but parses the remaining line into the associated type.
+static inline uint64_t priv_read_uint64_t (uint8_t* buffRead, const char* cmdStr, uint16_t length)
+{
+	//  Perform a one-liner read and check for errors.
+	uint8_t* start;
+	int amount = priv_read_oneliner (buffRead, cmdStr, length, &start);
+	if (amount < 0)
+		return UINT64_MAX;
+	//  Decode the response and return it.
+	return _STR_TO_U64 (1, start, 0, UINT64_MAX);
+}
 static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length)
 {
 	//  Perform a one-liner read and check for errors.
@@ -317,12 +332,8 @@ static inline int16_t priv_read_int16_t (uint8_t* buffRead, const char* cmdStr, 
 	int amount = priv_read_oneliner (buffRead, cmdStr, length, &start);
 	if (amount < 0)
 		return INT16_MAX;
-	//  Decode the response.
-	int decode = strtol ((char*)start, NULL, 10);
-	if (decode > INT16_MAX) decode = INT16_MAX;
-	if (decode < INT16_MIN) decode = INT16_MIN;
-	//  Return it.
-	return (int16_t)decode;
+	//  Decode the response and return it.
+	return _STR_TO_B10_TYPE (1, start, int16_t, INT16_MIN, INT16_MAX);
 }
 static inline uint16_t priv_read_uint16_t (uint8_t* buffRead, const char* cmdStr, uint16_t length)
 {
@@ -331,12 +342,8 @@ static inline uint16_t priv_read_uint16_t (uint8_t* buffRead, const char* cmdStr
 	int amount = priv_read_oneliner (buffRead, cmdStr, length, &start);
 	if (amount < 0)
 		return UINT16_MAX;
-	//  Decode the response.
-	int decode = strtol ((char*)start, NULL, 10);
-	if (decode > UINT16_MAX) decode = UINT16_MAX;
-	if (decode < 0) decode = 0;
-	//  Return it.
-	return (uint16_t)decode;
+	//  Decode the response and return it.
+	return _STR_TO_B10_TYPE (1, start, uint16_t, 0, UINT16_MAX);
 }
 
 static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, const char* params)
@@ -344,17 +351,17 @@ static inline int8_t priv_send_params (const char* baseCmd, uint16_t length, con
 	uint8_t buffRead [SERIAL_BUFF_SIZE];
 	//  See if we can shortcut the send.
 	if (params [0] == '\0')
-		return priv_read (buffRead, baseCmd, length);
+		return priv_read (buffRead, baseCmd, length) < 0 ? -1 : 1;
 	//  Build the full command string.
-	char fullCmd [SERIAL_CMD_SIZE];
-	int amount = snprintf (fullCmd, SERIAL_CMD_SIZE, "%s %s\n", baseCmd, params);
+	char completeCmd [SERIAL_CMD_SIZE];
+	int amount = snprintf (completeCmd, SERIAL_CMD_SIZE, "%s %s\n", baseCmd, params);
 	if (amount > SERIAL_CMD_SIZE)
 	{
-		_LOG (1, "Full command too long!  %d > %d\n", amount, SERIAL_CMD_SIZE);
+		_LOG (1, "Complete command too long!  %d > %d\n", amount, SERIAL_CMD_SIZE);
 		return -1;
 	}
 	//  Send it.
-	return priv_read (buffRead, fullCmd, amount);
+	return priv_read (buffRead, completeCmd, (uint16_t)amount) < 0 ? -1 : 1;
 }
 
 
@@ -400,6 +407,9 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 		case ironCmdType_heaterDetails_get:
 			priv_heaterDetails_get ();
 			break;
+		case ironCmdType_accelerometer_get:
+			priv_accelerometer_get ();
+			break;
 		case ironCmdType_spTemp_get:
 			priv_spTemp_get ();
 			break;
@@ -408,6 +418,9 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 			break;
 		case ironCmdType_idleEnable_get:
 			priv_idleEnable_get ();
+			break;
+		case ironCmdType_uptime_get:
+			priv_uptime_get ();
 			break;
 		case ironCmdType_idleTimer_get:
 			priv_idleTimer_get ();
@@ -480,6 +493,9 @@ static void priv_serRoutine_next (void)
 		case ironCmdType_heaterDetails_get:
 			priv_heaterDetails_get ();
 			break;
+		case ironCmdType_accelerometer_get:
+			priv_accelerometer_get ();
+			break;
 		case ironCmdType_spTemp_get:
 			priv_spTemp_get ();
 			break;
@@ -488,6 +504,9 @@ static void priv_serRoutine_next (void)
 			break;
 		case ironCmdType_idleEnable_get:
 			priv_idleEnable_get ();
+			break;
+		case ironCmdType_uptime_get:
+			priv_uptime_get ();
 			break;
 		case ironCmdType_idleTimer_get:
 			priv_idleTimer_get ();
@@ -570,15 +589,13 @@ static inline void skipToParamAndExtract_str (uint8_t** start, uint16_t lineSkip
 #define skipToParamAndExtract_float(start, lineSkips, charSkips, buffLen, type, capMin, capMax) \
 ({ \
 	buffLen -= priv_buff_skipLinesAndChars (&start, lineSkips, charSkips, buffLen); \
-	type value = strtof ((char*)start, NULL); \
-	_CAP_RANGE (1, "%f", value, capMin, capMax); \
+	type value = _STR_TO_FLOAT_TYPE (1, start, type, capMin, capMax); \
 	value; \
 })
 #define skipToParamAndExtract_int(start, lineSkips, charSkips, buffLen, type, capMin, capMax) \
 ({ \
 	buffLen -= priv_buff_skipLinesAndChars (&start, lineSkips, charSkips, buffLen); \
-	type value = strtol ((char*)start, NULL, 10); \
-	_CAP_RANGE (1, "%d", value, capMin, capMax); \
+	type value = _STR_TO_B10_TYPE (1, start, type, capMin, capMax); \
 	value; \
 })
 
@@ -597,6 +614,8 @@ static inline void priv_spTemp_get (void)
 	{  priv_get (spTemp, SP_TEMP, uint16_t, UINT16_MAX);  }
 static inline void priv_maxTemp_get (void)
 	{  priv_get (maxTemp, MAX_TEMP, uint16_t, UINT16_MAX);  }
+static inline void priv_uptime_get (void)
+	{  priv_get (uptime, UPTIME, uint64_t, UINT64_MAX);  }
 static inline void priv_idleTimer_get (void)
 	{  priv_get (idleTimer, IDLE_TIMER, uint16_t, UINT16_MAX);  }
 static inline void priv_idleTemp_get (void)
@@ -712,6 +731,12 @@ static inline void priv_heaterDetails_get (void)
 		gui_state_update (ironState_unknown);
 		return;
 	}
+}
+
+static inline void priv_accelerometer_get (void)
+{
+	_LOG (0, "Here.\n");
+	//gui_accelerometer_update ();
 }
 
 static inline int8_t priv_idleEnable_get (void)

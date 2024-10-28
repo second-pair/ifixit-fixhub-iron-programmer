@@ -165,6 +165,27 @@
 	retCode; \
 })
 
+//  `strto* ()` with capping & dealing with type casting.
+//  Note that `_STR_TO_B10_TYPE ()` works for any integer type other than 'uint64_t' and equivalent.
+#define _STR_TO_B10_TYPE(logLevel, string, type, capMin, capMax) \
+({ \
+	int64_t decode = strtoll ((char*)string, NULL, 10); \
+	_CAP_RANGE (logLevel, "%ld", decode, (int64_t)capMin, (int64_t)capMax); \
+	(type)decode; \
+})
+#define _STR_TO_U64(logLevel, string, capMin, capMax) \
+({ \
+	uint64_t decode = strtoull ((char*)string, NULL, 10); \
+	_CAP_RANGE (logLevel, "%ld", decode, (uint64_t)capMin, (uint64_t)capMax); \
+	decode; \
+})
+#define _STR_TO_FLOAT_TYPE(logLevel, string, type, capMin, capMax) \
+({ \
+	type decode = strtof ((char*)string, NULL); \
+	_CAP_RANGE (logLevel, "%f", decode, capMin, capMax); \
+	decode; \
+})
+
 //  Macro to extract the contents of a GTK+ textbox.
 #define _TEXTBOX_EXTRACT(textBox, destString, maxLength) \
 ({ \

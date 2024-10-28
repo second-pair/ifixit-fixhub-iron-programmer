@@ -40,8 +40,9 @@
 typedef enum ironCommandType
 {
 	//  Getters
-	ironCmdType_version_get, ironCmdType_heaterDetails_get,
+	ironCmdType_version_get, ironCmdType_heaterDetails_get, ironCmdType_accelerometer_get,
 	ironCmdType_spTemp_get, ironCmdType_maxTemp_get,
+	ironCmdType_uptime_get,
 	ironCmdType_idleEnable_get, ironCmdType_idleTimer_get, ironCmdType_idleTemp_get,
 	ironCmdType_sleepEnable_get, ironCmdType_sleepTimer_get,
 	ironCmdType_units_get, ironCmdType_calTemp_get,
@@ -76,6 +77,11 @@ uint8_t serial_isOpen ();
 void serial_cmd_submit (ironCommand* command);
 //  Creates the no-parameter 'command' for the given command type.
 void serial_cmd_noParams_submit (ironCommandType type);
+
+//  Error Checks
+#if SERIAL_CMD_SIZE > UINT16_MAX
+	#error SERIAL_CMD_SIZE > UINT16_MAX!  Lower this, or change the types that rely on this.
+#endif
 
 //  *--</Definitions>--*  //
 

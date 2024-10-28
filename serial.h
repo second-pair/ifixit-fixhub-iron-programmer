@@ -32,7 +32,7 @@
 #define SERIAL_PORT_PATH_LEN 128
 #define SERIAL_REBOOT_DELAY_MS 10
 #define SERIAL_REBOOT_RESTORE 0  //  Haven't yet gotten this to re-sync correctly.
-#define SERIAL_IRON_GET_TYPE_MAX 11
+#define SERIAL_IRON_GET_TYPE_MAX 13
 
 //  Global Type Definitions
 

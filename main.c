@@ -80,7 +80,11 @@ void cb_signal_terminate (int sigType);
 int main (int argc, char** argv)
 {
 	_LOG (0, "-=-  "TEXT_TL_TITLE"  -=-\n");
-	_LOG (0, "Compiled:  %04d-%02d-%02d %s\n", COMP_YEAR, COMP_MONTH, COMP_DAY, __TIME__);
+	#ifdef GIT_HASH
+		_LOG (0, "Compiled:  %04d-%02d-%02d %s  Git Hash:  %s\n", COMP_YEAR, COMP_MONTH, COMP_DAY, __TIME__, GIT_HASH);
+	#else
+		_LOG (0, "Compiled:  %04d-%02d-%02d %s\n", COMP_YEAR, COMP_MONTH, COMP_DAY, __TIME__);
+	#endif
 	_LOG (0, "'libserialport' version:  %s\n", sp_get_package_version_string ());
 
 	//  Register signal handlers for signals we want to trap.

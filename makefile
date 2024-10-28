@@ -29,7 +29,7 @@ CMD_GDB=gdb
 #  Compiler
 FLAGS_DBG=-O0 -g
 FLAGS_REL=-O3 -g
-CMD_COMP=gcc -Wall -Wconversion
+CMD_COMP=gcc -Wall -Wconversion -D GIT_HASH=\"$(GIT_HASH)\"
 CMD_OBJCOPY=objcopy
 CMD_STRIP=strip
 SRC_C_EXTRA=
@@ -99,15 +99,23 @@ update:
 
 #  Cleanup
 clean:
-	rm -f $(PATH_OBJ)/*.$(TAG_REL).*.o $(PATH_OBJ)/*.$(TAG_DBG).*.o \
+	rm -f $(PATH_OBJ)/*.$(TAG_REL).*.o $(PATH_OBJ)/*.$(TAG_DBG).*.o $(FILE_CSS) \
 	$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).* $(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).*
 clean-all:  clean
 	rm -f libserialport.$(TAG_LINUX).a libserialport.$(TAG_WIN).a libserialport.$(TAG_ARM).a
 
 
-#  Serial
-serial:  libserialport.$(TAG_LINUX).a libserialport.$(TAG_WIN).a libserialport.$(TAG_ARM).a
-libserialport.$(TAG_LINUX).a:
+#  Custom Build Files - CSS
+FILE_CSS=$(PATH_BIN)/$(PROG_NAME).css
+$(FILE_CSS):
+	cp ./$(PROG_NAME).css $(FILE_CSS)
+
+#  Custom Build Files - Serial
+SER_LINUX=libserialport.$(TAG_LINUX).a
+SER_WIN=libserialport.$(TAG_WIN).a
+SER_ARM=libserialport.$(TAG_ARM).a
+serial:  $(SER_LINUX) $(SER_WIN) $(SER_ARM)
+$(SER_LINUX):
 	(cd libserialport && \
 	git reset --hard && \
 	git clean -fx && \
@@ -116,7 +124,7 @@ libserialport.$(TAG_LINUX).a:
 	./configure && \
 	make && \
 	cp .libs/libserialport.a ../libserialport.$(TAG_LINUX).a)
-libserialport.$(TAG_WIN).a:
+$(SER_WIN):
 	(cd libserialport && \
 	git reset --hard && \
 	git clean -fx && \
@@ -125,7 +133,7 @@ libserialport.$(TAG_WIN).a:
 	./configure --host=$(PFX_WIN) && \
 	make && \
 	cp .libs/libserialport.dll.a ../libserialport.$(TAG_WIN).a)
-libserialport.$(TAG_ARM).a:
+$(SER_ARM):
 	(cd libserialport && \
 	git reset --hard && \
 	git clean -fx && \
@@ -192,33 +200,33 @@ $(PATH_OBJ)/%.$(TAG_DBG).$(TAG_ARM).o:  %.c $(PATH_OBJ)
 		$(CMD_COMP_OBJ_DBG_ARM) $< -o $@
 
 #  Compiling the programme binary files - release.
-$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_LINUX).$(EXT_PROG_LINUX):  $(OBJ_REL_LINUX) $(PATH_BIN) libserialport.$(TAG_LINUX).a
+$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_LINUX).$(EXT_PROG_LINUX):  $(OBJ_REL_LINUX) $(PATH_BIN) $(SER_LINUX) $(FILE_CSS)
 	$(CMD_COMP_PROG_REL_LINUX) -o $@
 	$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_LINUX).sym
 	$(CMD_STRIP) --strip-debug --strip-unneeded $@
 	$(CMD_OBJCOPY) --add-gnu-debuglink=$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_LINUX).sym $@
-$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_WIN).$(EXT_PROG_WIN):  $(OBJ_REL_WIN) $(PATH_BIN) libserialport.$(TAG_WIN).a
+$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_WIN).$(EXT_PROG_WIN):  $(OBJ_REL_WIN) $(PATH_BIN) $(SER_WIN) $(FILE_CSS)
 	$(CMD_COMP_PROG_REL_WIN) -o $@
 	$(PFX_WIN)-$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_WIN).sym
 	$(PFX_WIN)-$(CMD_STRIP) --strip-debug --strip-unneeded $@
 	$(PFX_WIN)-$(CMD_OBJCOPY) --add-gnu-debuglink=$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_WIN).sym $@
-$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_ARM).$(EXT_PROG_ARM):  $(OBJ_REL_ARM) $(PATH_BIN) libserialport.$(TAG_ARM).a
+$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_ARM).$(EXT_PROG_ARM):  $(OBJ_REL_ARM) $(PATH_BIN) $(SER_ARM) $(FILE_CSS)
 	$(CMD_COMP_PROG_REL_ARM) -o $@
 	$(PFX_ARM)-$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_ARM).sym
 	$(PFX_ARM)-$(CMD_STRIP) --strip-debug --strip-unneeded $@
 	$(PFX_ARM)-$(CMD_OBJCOPY) --add-gnu-debuglink=$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_ARM).sym $@
 #  Compiling the programme binary files - debug.
-$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_LINUX).$(EXT_PROG_LINUX):  $(OBJ_DBG_LINUX) $(PATH_BIN) libserialport.$(TAG_LINUX).a
+$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_LINUX).$(EXT_PROG_LINUX):  $(OBJ_DBG_LINUX) $(PATH_BIN) $(SER_LINUX) $(FILE_CSS)
 	$(CMD_COMP_PROG_DBG_LINUX) -o $@
 	$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_LINUX).sym
 	$(CMD_STRIP) --strip-debug --strip-unneeded $@
 	$(CMD_OBJCOPY) --add-gnu-debuglink=$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_LINUX).sym $@
-$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_WIN).$(EXT_PROG_WIN):  $(OBJ_DBG_WIN) $(PATH_BIN) libserialport.$(TAG_WIN).a
+$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_WIN).$(EXT_PROG_WIN):  $(OBJ_DBG_WIN) $(PATH_BIN) $(SER_WIN) $(FILE_CSS)
 	$(CMD_COMP_PROG_DBG_WIN) -o $@
 	$(PFX_WIN)-$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_WIN).sym
 	$(PFX_WIN)-$(CMD_STRIP) --strip-debug --strip-unneeded $@
 	$(PFX_WIN)-$(CMD_OBJCOPY) --add-gnu-debuglink=$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_WIN).sym $@
-$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_ARM).$(EXT_PROG_ARM):  $(OBJ_DBG_ARM) $(PATH_BIN) libserialport.$(TAG_ARM).a
+$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_ARM).$(EXT_PROG_ARM):  $(OBJ_DBG_ARM) $(PATH_BIN) $(SER_ARM) $(FILE_CSS)
 	$(CMD_COMP_PROG_DBG_ARM) -o $@
 	$(PFX_ARM)-$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_ARM).sym
 	$(PFX_ARM)-$(CMD_STRIP) --strip-debug --strip-unneeded $@

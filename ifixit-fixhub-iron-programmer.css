@@ -1,0 +1,86 @@
+:root
+{
+	--background0: #1E2028;
+	--background1: #282B35FF;
+	--termDarkBlack: #000000;
+	--termLiteBlack: #535353;
+	--termDarkRed: #DB2C38;
+	--termLiteRed: #FB092C;
+	--termDarkGreen: #41B645;
+	--termLiteGreen: #46E415;
+	--termDarkYellow: #C67C48;
+	--termLiteYellow: #FD9050;
+	--termDarkBlue: #786DC4;
+	--termLiteBlue: #8572F8;
+	--termDarkMagenta: #B21889;
+	--termLiteMagenta: #D200A0;
+	--termDarkCyan: #00A0BE;
+	--termLiteCyan: #19C4F1;
+	--termDarkWhite: #D0D0D0;
+	--termLiteWhite: #FFFFFF;
+
+    --contDarkBlack: #000000;
+    --contLiteBlack: #535353;
+    --contDarkRed:  #A02129;
+	--contLiteRed:  #F1B2B6;
+    --contDarkGreen:  #246426;
+	--contLiteGreen:  #86D088;
+    --contDarkYellow:  #6C4428;
+	--contLiteYellow:  #DFB79B;
+    --contDarkBlue:  #58508F;
+	--contLiteBlue:  #C1BCE4;
+    --contDarkMagenta:  #A2167D;
+	--contLiteMagenta:  #E3ABD4;
+    --contDarkCyan:  #005868;
+    --contLiteCyan:  #73CBDB;
+    --contDarkWhite:  #D0D0D0;
+    --contLiteWhite:  #FFFFFF;
+
+	--grey0:  #000000;
+	--grey1:  #1E212B;
+	--grey2:  #282B35;
+	--grey3:  #505050;
+	--grey4:  #DCDCDC;
+	--grey5:  #FFFFFF;
+
+	--plainTextColour: var(--termLiteWhite);
+	--h1Colour: var(--termLiteCyan);
+	--h2Colour: var(--termLiteGreen);
+	--h3PlusColour: var(--termLiteMagenta);
+	--codeColour: var(--termLiteYellow);
+	--backgroundColour: var(--background);
+	--tableColour: var(--termLiteRed);
+	--linkPlainColour: var(--termLiteBlue);
+	--linkVisitedColour: var(--termDarkBlue);
+}
+
+
+:root
+{
+	background:  var(--background1);
+	padding:  1.0em;
+}
+
+separator
+{
+	background:  var(--contLiteWhite);
+	margin:  1.0em;
+}
+
+label#label-title
+{
+	font-size:  1.6em;
+	font-weight:  560;
+}
+
+label#label-bolderline
+{
+	font-size:  1.05em;
+	font-weight:  600;
+	text-decoration:  underline;
+}
+
+button
+{
+	background:  var(--contDarkCyan);
+}

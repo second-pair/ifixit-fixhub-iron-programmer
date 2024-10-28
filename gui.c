@@ -87,6 +87,7 @@ static GtkWidget* priv_config_create (void);
 
 //  Local Prototype Callbacks
 static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data);
+static void cb_btn_css_reload_clicked (GtkButton* theButton, gpointer data) __attribute__ ((__unused__));
 static void cb_btn_reset_clicked (GtkButton* theButton, gpointer data);
 static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data);
 
@@ -126,7 +127,9 @@ static GtkWidget* priv_layout_create (void)
 	GtkWidget* box_main = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 	gtk_widget_set_halign (box_main, GTK_ALIGN_CENTER);
 	gtk_widget_set_valign (box_main, GTK_ALIGN_CENTER);
-	gtk_box_append (GTK_BOX (box_main), gtk_label_new (TEXT_TL_TITLE));
+	GtkWidget* label_title = gtk_label_new (TEXT_TL_TITLE);
+	gtk_widget_set_name (label_title, "label-title");
+	gtk_box_append (GTK_BOX (box_main), label_title);
 	gtk_box_append (GTK_BOX (box_main), gtk_label_new (NULL));
 
 	//  Append the section widgets.
@@ -151,8 +154,6 @@ static GtkWidget* priv_layout_create (void)
 static GtkWidget* priv_sep_create (GtkOrientation orientation)
 {
 	GtkWidget* separator = gtk_separator_new (orientation);
-	gtk_widget_set_margin_top (separator, 10);
-	gtk_widget_set_margin_bottom (separator, 10);
 	return separator;
 }
 
@@ -169,6 +170,13 @@ static GtkWidget* priv_ser_create (void)
 	btn_ser_connect = gtk_button_new_with_label (TEXT_SER_OPEN);
 	g_signal_connect (btn_ser_connect, "clicked", G_CALLBACK (cb_btn_ser_connect_clicked), NULL);
 	gtk_box_append (GTK_BOX (box_serial), btn_ser_connect);
+
+	#if (GUI_BUILD_BTN_CSS_RELOAD == 1)
+		GtkWidget* btn_css_reload = gtk_button_new_with_label ("Reload CSS");
+		gtk_box_append (GTK_BOX (box_serial), btn_css_reload);
+		g_signal_connect (btn_css_reload, "clicked", G_CALLBACK (cb_btn_css_reload_clicked), NULL);
+	#endif
+
 	return box_serial;
 }
 static GtkWidget* priv_core_create (void)
@@ -182,7 +190,9 @@ static GtkWidget* priv_core_create (void)
 	GtkWidget* grid_core = gtk_grid_new ();
 	gtk_grid_set_column_homogeneous (GTK_GRID (grid_core), 1);
 	gtk_grid_set_row_homogeneous (GTK_GRID (grid_core), 1);
-	gtk_grid_attach (GTK_GRID (grid_core), gtk_label_new (TEXT_CORE_TITLE), 0, 0, 4, 1);
+	GtkWidget* title_core = gtk_label_new (TEXT_CORE_TITLE);
+	gtk_widget_set_name (title_core, "label-bolderline");
+	gtk_grid_attach (GTK_GRID (grid_core), title_core, 0, 0, 4, 1);
 
 	/*  (Intended) States:
 	Switch Off
@@ -217,7 +227,9 @@ static GtkWidget* priv_setpoints_create (void)
 	GtkWidget* grid_setpoints = gtk_grid_new ();
 	gtk_grid_set_column_homogeneous (GTK_GRID (grid_setpoints), 1);
 	gtk_grid_set_row_homogeneous (GTK_GRID (grid_setpoints), 1);
-	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TITLE), 0, 0, 4, 1);
+	GtkWidget* title_setpoints = gtk_label_new (TEXT_SETPOINTS_TITLE);
+	gtk_widget_set_name (title_setpoints, "label-bolderline");
+	gtk_grid_attach (GTK_GRID (grid_setpoints), title_setpoints, 0, 0, 4, 1);
 
 	//  Setpoint Temp
 	gtk_grid_attach (GTK_GRID (grid_setpoints), gtk_label_new (TEXT_SETPOINTS_TEMP), 0, 1, 1, 1);
@@ -254,7 +266,9 @@ static GtkWidget* priv_aux_create (void)
 	GtkWidget* grid_aux = gtk_grid_new ();
 	gtk_grid_set_column_homogeneous (GTK_GRID (grid_aux), 1);
 	gtk_grid_set_row_homogeneous (GTK_GRID (grid_aux), 1);
-	gtk_grid_attach (GTK_GRID (grid_aux), gtk_label_new (TEXT_AUX_TITLE), 0, 0, 3, 1);
+	GtkWidget* title_aux = gtk_label_new (TEXT_AUX_TITLE);
+	gtk_widget_set_name (title_aux, "label-bolderline");
+	gtk_grid_attach (GTK_GRID (grid_aux), title_aux, 0, 0, 3, 1);
 
 	//  Runtime Information
 	gtk_grid_attach (GTK_GRID (grid_aux), gtk_label_new (TEXT_AUX_UPTIME), 0, 1, 1, 1);
@@ -301,8 +315,10 @@ static GtkWidget* priv_config_create (void)
 	GtkWidget* grid_config = gtk_grid_new ();
 	gtk_grid_set_column_homogeneous (GTK_GRID (grid_config), 1);
 	gtk_grid_set_row_homogeneous (GTK_GRID (grid_config), 1);
-	uint8_t rp = 0;
-	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_TITLE), 0, rp++, 8, 1);
+	uint8_t rp = 0;;
+	GtkWidget* title_config = gtk_label_new (TEXT_CONFIG_TITLE);
+	gtk_widget_set_name (title_config, "label-bolderline");
+	gtk_grid_attach (GTK_GRID (grid_config), title_config, 0, rp++, 8, 1);
 
 	//  Idle Timer
 	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_IDLE), 0, rp, 1, 1);
@@ -454,6 +470,12 @@ void cb_app_main_activate (GtkApplication* theApp, gpointer data)
 		gtk_window_fullscreen (GTK_WINDOW (window_main));
 	#endif
 
+	//  Import CSS.
+	GtkCssProvider* cssProv_main = gtk_css_provider_new ();
+	gtk_css_provider_load_from_path (cssProv_main, GUI_PATH_CSS);
+	GdkDisplay* display_main = gdk_display_get_default ();
+	gtk_style_context_add_provider_for_display (display_main, GTK_STYLE_PROVIDER (cssProv_main), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
 	//  Create its child and present it.
 	gtk_window_set_child (GTK_WINDOW (window_main), priv_layout_create ());
 	gtk_window_present (GTK_WINDOW (window_main));
@@ -495,6 +517,15 @@ static void cb_btn_ser_connect_clicked (GtkButton* theButton, gpointer data)
 		if (serial_isOpen ())
 			gtk_button_set_label (theButton, TEXT_SER_CLOSE);
 	}
+}
+
+static void cb_btn_css_reload_clicked (GtkButton* theButton, gpointer data)
+{
+	//  Import CSS.
+	GtkCssProvider* cssProv_main = gtk_css_provider_new ();
+	gtk_css_provider_load_from_path (cssProv_main, "/gtk4-build/css.css");
+	GdkDisplay* display_main = gdk_display_get_default ();
+	gtk_style_context_add_provider_for_display (display_main, GTK_STYLE_PROVIDER (cssProv_main), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
 //  Helper functions for the Setter Buttons

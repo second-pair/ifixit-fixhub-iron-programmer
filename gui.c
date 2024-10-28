@@ -156,6 +156,23 @@ static GtkWidget* priv_sep_create (GtkOrientation orientation)
 	GtkWidget* separator = gtk_separator_new (orientation);
 	return separator;
 }
+//  Create a double-stacked GtkSwitch and attach it to the provided grid.
+#define PRIV_SWITCH_CREATE_ATTACH_GRID(grid, x, y, w, h) \
+({ \
+	GtkWidget* grid_doublestack = gtk_grid_new (); \
+	GtkWidget* sw_new = gtk_switch_new (); \
+	gtk_grid_attach (GTK_GRID (grid_doublestack), sw_new, 0, 0, 1, 1); \
+	gtk_grid_attach (GTK_GRID (grid), grid_doublestack, x, y, w, h); \
+	sw_new; \
+})
+#define PRIV_SWITCH_CREATE_ATTACH_BOX(box) \
+({ \
+	GtkWidget* grid_doublestack = gtk_grid_new (); \
+	GtkWidget* sw_new = gtk_switch_new (); \
+	gtk_grid_attach (GTK_GRID (grid_doublestack), sw_new, 0, 0, 1, 1); \
+	gtk_box_append (GTK_BOX (box), grid_doublestack); \
+	sw_new; \
+})
 
 //  Section functions for ^.
 static GtkWidget* priv_ser_create (void)
@@ -324,9 +341,8 @@ static GtkWidget* priv_config_create (void)
 	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_IDLE), 0, rp, 1, 1);
 	label_idleEnable_curr = gtk_label_new ("<idleEnable>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_idleEnable_curr, 1, rp, 1, 1);
-	sw_idleEnable_new = gtk_switch_new ();
+	sw_idleEnable_new = PRIV_SWITCH_CREATE_ATTACH_GRID (grid_config, 2, rp, 1, 1);
 	gui_sw_idleEnable_forceState (GUI_IDLE_ENABLE_DEFAULT);
-	gtk_grid_attach (GTK_GRID (grid_config), sw_idleEnable_new, 2, rp, 1, 1);
 	label_idleTimer_curr = gtk_label_new ("<idleTimer>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_idleTimer_curr, 3, rp, 1, 1);
 	GtkEntryBuffer* buffer_idleTimer_new = gtk_entry_buffer_new (TOSTR (GUI_IDLE_TIMER_DEFAULT), -1);
@@ -345,9 +361,8 @@ static GtkWidget* priv_config_create (void)
 	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_SLEEP), 0, rp, 1, 1);
 	label_sleepEnable_curr = gtk_label_new ("<sleepEnable>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_sleepEnable_curr, 1, rp, 1, 1);
-	sw_sleepEnable_new = gtk_switch_new ();
+	sw_sleepEnable_new = PRIV_SWITCH_CREATE_ATTACH_GRID (grid_config, 2, rp, 1, 1);
 	gui_sw_sleepEnable_forceState (GUI_SLEEP_ENABLE_DEFAULT);
-	gtk_grid_attach (GTK_GRID (grid_config), sw_sleepEnable_new, 2, rp, 1, 1);
 	label_sleepTimer_curr = gtk_label_new ("<sleepTimer>");
 	gtk_grid_attach (GTK_GRID (grid_config), label_sleepTimer_curr, 3, rp, 1, 1);
 	GtkEntryBuffer* buffer_sleepTimer_new = gtk_entry_buffer_new (TOSTR (GUI_SLEEP_ENABLE_TIMER), -1);
@@ -364,12 +379,15 @@ static GtkWidget* priv_config_create (void)
 	label_units_curr = gtk_label_new ("<celsius>");
 	gtk_box_append (GTK_BOX (box_units), label_units_curr);
 	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_UNIT_TEMP_F));
-	sw_units_new = gtk_switch_new ();
+
+
+	sw_units_new = PRIV_SWITCH_CREATE_ATTACH_BOX (box_units);
 	gui_sw_units_forceState (GUI_UNIT_CELSIUS_DEFAULT);
-	gtk_box_append (GTK_BOX (box_units), sw_units_new);
+	g_signal_connect (sw_units_new, "state-set", G_CALLBACK (cb_sw_units_stateSet), NULL);
+
+
 	gtk_box_append (GTK_BOX (box_units), gtk_label_new (TEXT_UNIT_TEMP_C));
 	gtk_grid_attach (GTK_GRID (grid_config), box_units, 0, rp++, 5, 1);
-	g_signal_connect (sw_units_new, "state-set", G_CALLBACK (cb_sw_units_stateSet), NULL);
 
 	//  Calibration Temperature
 	gtk_grid_attach (GTK_GRID (grid_config), gtk_label_new (TEXT_CONFIG_CAL_TEMP), 1, rp, 1, 1);

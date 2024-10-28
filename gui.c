@@ -541,7 +541,7 @@ static void cb_btn_css_reload_clicked (GtkButton* theButton, gpointer data)
 {
 	//  Import CSS.
 	GtkCssProvider* cssProv_main = gtk_css_provider_new ();
-	gtk_css_provider_load_from_path (cssProv_main, "/gtk4-build/css.css");
+	gtk_css_provider_load_from_path (cssProv_main, GUI_PATH_CSS);
 	GdkDisplay* display_main = gdk_display_get_default ();
 	gtk_style_context_add_provider_for_display (display_main, GTK_STYLE_PROVIDER (cssProv_main), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }

@@ -83,4 +83,15 @@ label#label-bolderline
 button
 {
 	background:  var(--contDarkCyan);
+	border-radius:  0.4em;
+}
+
+text
+{
+	background:  #FFFFFFED;
+	color:  var(--contDarkBlack);
+	padding:  0.3em;
+	margin:  0.2em;
+	border-radius:  0.4em;
+	border:  1.5px solid #000000DF;
 }

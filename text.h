@@ -58,6 +58,7 @@
 //  Secondary Readouts
 #define TEXT_AUX_TITLE "Secondary Readouts"
 #define TEXT_AUX_UPTIME "Uptime"
+#define TEXT_AUX_ACCELEROMETER "Acceleration"
 #define TEXT_AUX_VERSION "Version"
 //  Configuration
 #define TEXT_CONFIG_TITLE "Configuration"

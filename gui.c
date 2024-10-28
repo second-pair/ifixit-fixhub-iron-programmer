@@ -49,6 +49,10 @@ static GtkWidget* label_maxTemp_curr = NULL;
 static GtkWidget* text_maxTemp_new = NULL;
 //  Auxiliary Readouts
 static GtkWidget* label_uptime = NULL;
+static GtkWidget* label_accelX = NULL;
+static GtkWidget* label_accelY = NULL;
+static GtkWidget* label_accelZ = NULL;
+static GtkWidget* label_accelMag = NULL;
 static GtkWidget* label_faults = NULL;
 static GtkWidget* label_version = NULL;
 static GtkWidget* label_sn_device = NULL;
@@ -260,7 +264,18 @@ static GtkWidget* priv_aux_create (void)
 	gtk_grid_attach (GTK_GRID (grid_aux), label_faults, 2, 1, 1, 1);
 
 	//  Accelerometer
-	gtk_grid_attach (GTK_GRID (grid_aux), gtk_label_new ("<accelerometer>"), 0, 2, 3, 1);
+	GtkWidget* box_accel = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_box_set_homogeneous (GTK_BOX (box_accel), 1);
+	gtk_box_append (GTK_BOX (box_accel), gtk_label_new (TEXT_AUX_ACCELEROMETER));
+	gtk_grid_attach (GTK_GRID (grid_aux), box_accel, 0, 2, 3, 1);
+	label_accelX = gtk_label_new ("<accelX>");
+	gtk_box_append (GTK_BOX (box_accel), label_accelX);
+	label_accelY = gtk_label_new ("<accelY>");
+	gtk_box_append (GTK_BOX (box_accel), label_accelY);
+	label_accelZ = gtk_label_new ("<accelZ>");
+	gtk_box_append (GTK_BOX (box_accel), label_accelZ);
+	label_accelMag = gtk_label_new ("<accelMag>");
+	gtk_box_append (GTK_BOX (box_accel), label_accelMag);
 
 	//  Device Information
 	label_version = gtk_label_new ("<version>");
@@ -598,6 +613,14 @@ static void cb_btn_reboot_clicked (GtkButton* theButton, gpointer data)
 	gtk_label_set_text (GTK_LABEL (theLabel), updateText); \
 	return 0; \
 })
+#define label_update_float_accel(theLabel, theNumber, numType) \
+({ \
+	numType toRecv; \
+	memcpy (&toRecv, &theNumber, sizeof (toRecv)); \
+	char updateText [LABEL_LEN_NUMBER]; \
+	snprintf (updateText, LABEL_LEN_NUMBER, "%.4f", toRecv); \
+	gtk_label_set_text (GTK_LABEL (theLabel), updateText); \
+})
 #define label_update_boolText(theLabel, theBool, textFalse, textTrue) \
 ({ \
 	switch ((uintptr_t)theBool) \
@@ -690,16 +713,20 @@ static gboolean cb_uptime_update_to (gpointer data)
 }
 static gboolean cb_accelerometer_update_to (gpointer data)
 {
+	//  Process the raw parameter.
 	uint64_t aEncode = (uint64_t)data;
 	AccelRaw aRaw;
 	memcpy (&aRaw, &aEncode, sizeof (aRaw));
+	//  Convert to m/s/s.
 	float accelX = (float)aRaw .aX * IRON_ACCEL_FACTOR;
 	float accelY = (float)aRaw .aY * IRON_ACCEL_FACTOR;
 	float accelZ = (float)aRaw .aZ * IRON_ACCEL_FACTOR;
 	float accelM = (float)aRaw .aMag * IRON_ACCEL_FACTOR;
-
-	//gtk_label_set_text (GTK_LABEL (label_uptime), updateText);
-	printf ("X %f   Y %f   Z %f   M %f\n", accelX, accelY, accelZ, accelM);
+	//  Write the values.
+	label_update_float_accel (label_accelX, accelX, float);
+	label_update_float_accel (label_accelY, accelY, float);
+	label_update_float_accel (label_accelZ, accelZ, float);
+	label_update_float_accel (label_accelMag, accelM, float);
 	return 0;
 }
 static gboolean cb_idleEnable_update_to (gpointer eND)

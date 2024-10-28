@@ -23,7 +23,7 @@
 //  Defines
 #define WAIT_COUNT 100
 #define WAIT_SLEEP_MS 1
-#define THREAD_SLEEP_MS 0// (333 / SERIAL_IRON_GET_TYPE_MAX)
+#define THREAD_SLEEP_MS (333 / SERIAL_IRON_GET_TYPE_MAX)
 #define THREAD_QUEUE_WAIT_MS 1
 
 //  Serial port config.

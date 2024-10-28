@@ -763,7 +763,7 @@ static inline void priv_accelerometer_get (void)
 
 	/*  Parse the information.
 	MXC4005 Datasheet:  https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/323/MXC400xXC_Rev.B_4-24-15.pdf
-	See drawing.ext.
+	See 'acceleration-map.jpg'.
 	With the iron orientated horizontally, tip away from you & clip pointing upwards:
 	 -  X-axis points away form you - in the direction of the tip.
 	 -  Y-axis points to the left, parpendicular to the direction of the tip.

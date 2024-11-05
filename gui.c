@@ -488,9 +488,17 @@ void cb_app_main_activate (GtkApplication* theApp, gpointer data)
 		gtk_window_fullscreen (GTK_WINDOW (window_main));
 	#endif
 
+	//  Set Dark theme.
+	GtkSettings* theSettings = gtk_settings_get_default ();
+	g_object_set (theSettings, "gtk-application-prefer-dark-theme", 1, NULL);
+
 	//  Import CSS.
 	GtkCssProvider* cssProv_main = gtk_css_provider_new ();
-	gtk_css_provider_load_from_path (cssProv_main, GUI_PATH_CSS);
+	#if (defined _WIN32 || defined _WINDOWS || defined __CYGWIN__ || defined __NT__)
+		gtk_css_provider_load_from_path (cssProv_main, GUI_PATH_CSS_WIN);
+	#else
+		gtk_css_provider_load_from_path (cssProv_main, GUI_PATH_CSS);
+	#endif
 	GdkDisplay* display_main = gdk_display_get_default ();
 	gtk_style_context_add_provider_for_display (display_main, GTK_STYLE_PROVIDER (cssProv_main), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 

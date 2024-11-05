@@ -5,7 +5,9 @@ This programmer provides a live-view of your soldering iron and allows you to ma
 
 ##  Installing
 
-TODO
+On Linux systems, you'll need to install the gtk4 (runtime) library.  In theory, everything else should be built into the binary, but please drop me an issue if this needs an update.
+
+On Windows, you will need to download the attached zip file and extract it.  This contains the dependencies required to run this programme on a Windows machine.  From within the zip, open the 'bin' folder and run the 'ifixit-fixhub-iron-programmer_Vx.y.rel.win.exe' file.
 
 ---
 

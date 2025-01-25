@@ -480,6 +480,7 @@ void cb_app_main_activate (GtkApplication* theApp, gpointer data)
 	//  Create the window.
 	GtkWidget* window_main = gtk_application_window_new (theApp);
 	gtk_window_set_title (GTK_WINDOW (window_main), GUI_TITLE);
+	gtk_window_set_resizable (GTK_WINDOW (window_main), 1);
 
 	//  Determine how we want to size the window.
 	#if (GUI_WINDOW_MODE == 1)

@@ -19,22 +19,22 @@
 	--termDarkWhite: #D0D0D0;
 	--termLiteWhite: #FFFFFF;
 
-    --contDarkBlack: #000000;
-    --contLiteBlack: #535353;
-    --contDarkRed:  #A02129;
+	--contDarkBlack: #000000;
+	--contLiteBlack: #535353;
+	--contDarkRed:  #A02129;
 	--contLiteRed:  #F1B2B6;
-    --contDarkGreen:  #246426;
+	--contDarkGreen:  #246426;
 	--contLiteGreen:  #86D088;
-    --contDarkYellow:  #6C4428;
+	--contDarkYellow:  #6C4428;
 	--contLiteYellow:  #DFB79B;
-    --contDarkBlue:  #58508F;
+	--contDarkBlue:  #58508F;
 	--contLiteBlue:  #C1BCE4;
-    --contDarkMagenta:  #A2167D;
+	--contDarkMagenta:  #A2167D;
 	--contLiteMagenta:  #E3ABD4;
-    --contDarkCyan:  #005868;
-    --contLiteCyan:  #73CBDB;
-    --contDarkWhite:  #D0D0D0;
-    --contLiteWhite:  #FFFFFF;
+	--contDarkCyan:  #005868;
+	--contLiteCyan:  #73CBDB;
+	--contDarkWhite:  #D0D0D0;
+	--contLiteWhite:  #FFFFFF;
 
 	--grey0:  #000000;
 	--grey1:  #1E212B;
@@ -57,13 +57,28 @@
 
 *
 {
-	font-size:  1.2em;
+	font-size: 1.2em;
+	margin: 0em;
+	font-family: Calibri, sans-serif;
+	font-weight: 500;
+	box-shadow: 0em 0em #00000000;
+	border-radius: 0em;
+	border: 0em;
+	background: #00000000;
 }
 
 window
 {
 	background:  #282B35FF;
-	padding:  1.0em;
+}
+headerbar
+{
+	background:  #FFFFFFFF;
+}
+.title
+{
+	font-size:  0.65em;
+	color:  #1E212BFF;
 }
 
 separator
@@ -89,6 +104,13 @@ button
 {
 	background:  #005868;
 	border-radius:  0.4em;
+}
+button.minimize,
+button.maximize,
+button.close
+{
+	background: #00000000;
+	color: #1e212bff;
 }
 
 text

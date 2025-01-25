@@ -165,6 +165,8 @@ static GtkWidget* priv_sep_create (GtkOrientation orientation)
 ({ \
 	GtkWidget* grid_doublestack = gtk_grid_new (); \
 	GtkWidget* sw_new = gtk_switch_new (); \
+	gtk_widget_set_valign (grid_doublestack, GTK_ALIGN_CENTER); \
+	gtk_widget_set_halign (grid_doublestack, GTK_ALIGN_CENTER); \
 	gtk_grid_attach (GTK_GRID (grid_doublestack), sw_new, 0, 0, 1, 1); \
 	gtk_grid_attach (GTK_GRID (grid), grid_doublestack, x, y, w, h); \
 	sw_new; \
@@ -173,6 +175,8 @@ static GtkWidget* priv_sep_create (GtkOrientation orientation)
 ({ \
 	GtkWidget* grid_doublestack = gtk_grid_new (); \
 	GtkWidget* sw_new = gtk_switch_new (); \
+	gtk_widget_set_valign (grid_doublestack, GTK_ALIGN_CENTER); \
+	gtk_widget_set_halign (grid_doublestack, GTK_ALIGN_CENTER); \
 	gtk_grid_attach (GTK_GRID (grid_doublestack), sw_new, 0, 0, 1, 1); \
 	gtk_box_append (GTK_BOX (box), grid_doublestack); \
 	sw_new; \

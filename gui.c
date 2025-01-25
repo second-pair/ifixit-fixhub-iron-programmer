@@ -127,6 +127,10 @@ static GtkWidget* priv_layout_create (void)
 	GtkWidget* box_main = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 	gtk_widget_set_halign (box_main, GTK_ALIGN_CENTER);
 	gtk_widget_set_valign (box_main, GTK_ALIGN_CENTER);
+	gtk_widget_set_margin_bottom (box_main, 20);
+	gtk_widget_set_margin_end (box_main, 20);
+	gtk_widget_set_margin_start (box_main, 20);
+	gtk_widget_set_margin_top (box_main, 20);
 	GtkWidget* label_title = gtk_label_new (TEXT_TL_TITLE);
 	gtk_widget_set_name (label_title, "label-title");
 	gtk_box_append (GTK_BOX (box_main), label_title);
@@ -550,7 +554,11 @@ static void cb_btn_css_reload_clicked (GtkButton* theButton, gpointer data)
 {
 	//  Import CSS.
 	GtkCssProvider* cssProv_main = gtk_css_provider_new ();
-	gtk_css_provider_load_from_path (cssProv_main, GUI_PATH_CSS);
+	#if (defined _WIN32 || defined _WINDOWS || defined __CYGWIN__ || defined __NT__)
+		gtk_css_provider_load_from_path (cssProv_main, GUI_PATH_CSS_WIN);
+	#else
+		gtk_css_provider_load_from_path (cssProv_main, GUI_PATH_CSS);
+	#endif
 	GdkDisplay* display_main = gdk_display_get_default ();
 	gtk_style_context_add_provider_for_display (display_main, GTK_STYLE_PROVIDER (cssProv_main), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }

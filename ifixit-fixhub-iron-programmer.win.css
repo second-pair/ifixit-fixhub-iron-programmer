@@ -103,7 +103,9 @@ label#label-bolderline
 button
 {
 	background:  #005868;
-	border-radius:  0.4em;
+	border-radius:  1.0em;
+	margin:  0.15em;
+	background-image:  radial-gradient(#FFFFFF19, #00000030);
 }
 button.minimize,
 button.maximize,

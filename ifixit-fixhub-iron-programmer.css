@@ -1,4 +1,4 @@
-:root
+/*:root
 {
 	--background0: #1E2028;
 	--background1: #282B35FF;
@@ -19,22 +19,22 @@
 	--termDarkWhite: #D0D0D0;
 	--termLiteWhite: #FFFFFF;
 
-    --contDarkBlack: #000000;
-    --contLiteBlack: #535353;
-    --contDarkRed:  #A02129;
+	--contDarkBlack: #000000;
+	--contLiteBlack: #535353;
+	--contDarkRed:  #A02129;
 	--contLiteRed:  #F1B2B6;
-    --contDarkGreen:  #246426;
+	--contDarkGreen:  #246426;
 	--contLiteGreen:  #86D088;
-    --contDarkYellow:  #6C4428;
+	--contDarkYellow:  #6C4428;
 	--contLiteYellow:  #DFB79B;
-    --contDarkBlue:  #58508F;
+	--contDarkBlue:  #58508F;
 	--contLiteBlue:  #C1BCE4;
-    --contDarkMagenta:  #A2167D;
+	--contDarkMagenta:  #A2167D;
 	--contLiteMagenta:  #E3ABD4;
-    --contDarkCyan:  #005868;
-    --contLiteCyan:  #73CBDB;
-    --contDarkWhite:  #D0D0D0;
-    --contLiteWhite:  #FFFFFF;
+	--contDarkCyan:  #005868;
+	--contLiteCyan:  #73CBDB;
+	--contDarkWhite:  #D0D0D0;
+	--contLiteWhite:  #FFFFFF;
 
 	--grey0:  #000000;
 	--grey1:  #1E212B;
@@ -52,18 +52,38 @@
 	--tableColour: var(--termLiteRed);
 	--linkPlainColour: var(--termLiteBlue);
 	--linkVisitedColour: var(--termDarkBlue);
+}*/
+
+
+*
+{
+	font-size:  1.2em;
+	margin:  0em;
+	font-family:  Calibri, sans-serif;
+	font-weight:  500;
+	box-shadow:  0em 0em #00000000;
+	border-radius:  0em;
+	border:  0em;
+	background:  #00000000;
 }
 
-
-:root
+window
 {
-	background:  var(--background1);
-	padding:  1.0em;
+	background:  #282B35FF;
+}
+headerbar
+{
+	background:  #FFFFFFFF;
+}
+.title
+{
+	font-size:  0.9em;
+	color:  #1E212BFF;
 }
 
 separator
 {
-	background:  var(--contLiteWhite);
+	background:  #FFFFFF;
 	margin:  1.0em;
 }
 
@@ -79,17 +99,48 @@ label#label-bolderline
 	font-weight:  600;
 	text-decoration:  underline;
 }
+box > label
+{
+	font-size:  1.0em;
+}
 
 button
 {
-	background:  var(--contDarkCyan);
-	border-radius:  0.4em;
+	background:  #005868;
+	border-radius:  1.0em;
+	margin:  0.15em;
+	background-image:  radial-gradient(#FFFFFF19, #00000030);
+}
+button.minimize,
+button.maximize,
+button.close
+{
+	background: #00000000;
+	color: #1e212bff;
+}
+
+switch
+{
+	border-radius: 1.0em;
+	border:  1.0em;
+	padding:  0.15em;
+	background:  #0000003f;
+}
+switch:checked
+{
+	padding:  0.1em;
+	background:  #005868ff;
+}
+switch > slider
+{
+	border-radius:  1.0em;
+	background:   #757575ff;
 }
 
 text
 {
 	background:  #FFFFFFED;
-	color:  var(--contDarkBlack);
+	color:  #000000;
 	padding:  0.3em;
 	margin:  0.2em;
 	border-radius:  0.4em;

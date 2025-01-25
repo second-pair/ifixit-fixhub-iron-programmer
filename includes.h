@@ -34,7 +34,6 @@
 #define GUI_WINDOW_SIZE_W 640
 #define GUI_WINDOW_SIZE_H 480
 #define GUI_PATH_CSS "./ifixit-fixhub-iron-programmer.css"
-#define GUI_PATH_CSS_WIN "./ifixit-fixhub-iron-programmer.win.css"
 #define GUI_BUILD_BTN_CSS_RELOAD 0
 
 //  Parameters

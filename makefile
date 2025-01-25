@@ -100,7 +100,7 @@ update:
 #  Cleanup
 clean:
 	rm -f $(PATH_OBJ)/*.$(TAG_REL).*.o $(PATH_OBJ)/*.$(TAG_DBG).*.o \
-	$(FILE_CSS) $(FILE_CSS_WIN) \
+	$(FILE_CSS) \
 	$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).* $(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).*
 clean-all:  clean
 	rm -f libserialport.$(TAG_LINUX).a libserialport.$(TAG_WIN).a libserialport.$(TAG_ARM).a
@@ -108,11 +108,8 @@ clean-all:  clean
 
 #  Custom Build Files - CSS
 FILE_CSS=$(PATH_BIN)/$(PROG_NAME).css
-FILE_CSS_WIN=$(PATH_BIN)/$(PROG_NAME).$(TAG_WIN).css
 $(FILE_CSS):
 	cp ./$(PROG_NAME).css $(FILE_CSS)
-$(FILE_CSS_WIN):
-	cp ./$(PROG_NAME).$(TAG_WIN).css $(FILE_CSS_WIN)
 
 #  Custom Build Files - Serial
 SER_LINUX=libserialport.$(TAG_LINUX).a
@@ -209,7 +206,7 @@ $(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_LINUX).$(EXT_PROG_LINUX):  $(OBJ_REL_L
 	$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_LINUX).sym
 	$(CMD_STRIP) --strip-debug --strip-unneeded $@
 	$(CMD_OBJCOPY) --add-gnu-debuglink=$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_LINUX).sym $@
-$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_WIN).$(EXT_PROG_WIN):  $(OBJ_REL_WIN) $(PATH_BIN) $(SER_WIN) $(FILE_CSS_WIN)
+$(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_WIN).$(EXT_PROG_WIN):  $(OBJ_REL_WIN) $(PATH_BIN) $(SER_WIN) $(FILE_CSS)
 	$(CMD_COMP_PROG_REL_WIN) -o $@
 	$(PFX_WIN)-$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_REL).$(TAG_WIN).sym
 	$(PFX_WIN)-$(CMD_STRIP) --strip-debug --strip-unneeded $@
@@ -225,7 +222,7 @@ $(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_LINUX).$(EXT_PROG_LINUX):  $(OBJ_DBG_L
 	$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_LINUX).sym
 	$(CMD_STRIP) --strip-debug --strip-unneeded $@
 	$(CMD_OBJCOPY) --add-gnu-debuglink=$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_LINUX).sym $@
-$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_WIN).$(EXT_PROG_WIN):  $(OBJ_DBG_WIN) $(PATH_BIN) $(SER_WIN) $(FILE_CSS_WIN)
+$(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_WIN).$(EXT_PROG_WIN):  $(OBJ_DBG_WIN) $(PATH_BIN) $(SER_WIN) $(FILE_CSS)
 	$(CMD_COMP_PROG_DBG_WIN) -o $@
 	$(PFX_WIN)-$(CMD_OBJCOPY) --only-keep-debug $@ $(PATH_BIN)/$(PROG_NAME).$(TAG_DBG).$(TAG_WIN).sym
 	$(PFX_WIN)-$(CMD_STRIP) --strip-debug --strip-unneeded $@

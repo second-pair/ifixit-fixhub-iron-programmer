@@ -31,6 +31,11 @@
 #define PORT_BITS_DATA 8
 #define PORT_PARITY SP_PARITY_NONE
 #define PORT_BITS_STOP 0
+#define PORT_RTS 0
+#define PORT_CTS 0
+#define PORT_DTR 1
+#define PORT_DSR 0
+#define PORT_XONXOFF 0
 #define PORT_FLOW_CONTROL SP_FLOWCONTROL_NONE
 
 //  Command strings.
@@ -179,15 +184,16 @@ void serial_init (const char* portPath)
 		return;
 	}
 	//  Configure the Serial Port's settings.
-	struct sp_port_config* config_iron;
-	sp_new_config (&config_iron);
-	sp_set_config_baudrate (config_iron, PORT_BAUD);
-	sp_set_config_bits (config_iron, PORT_BITS_DATA);
-	sp_set_config_parity (config_iron, PORT_PARITY);
-	sp_set_config_stopbits (config_iron, PORT_BITS_STOP);
-	sp_set_config_flowcontrol (config_iron, PORT_FLOW_CONTROL);
-	sp_set_config (port_iron, config_iron);
-	sp_free_config (config_iron);
+	sp_set_baudrate (port_iron, PORT_BAUD);
+	sp_set_bits (port_iron, PORT_BITS_DATA);
+	sp_set_parity (port_iron, PORT_PARITY);
+	sp_set_stopbits (port_iron, PORT_BITS_STOP);
+	sp_set_rts (port_iron, PORT_RTS);
+	sp_set_cts (port_iron, PORT_CTS);
+	sp_set_dtr (port_iron, PORT_DTR);
+	sp_set_dsr (port_iron, PORT_DSR);
+	sp_set_xon_xoff (port_iron, PORT_XONXOFF);
+	sp_set_flowcontrol (port_iron, PORT_FLOW_CONTROL);
 
 	//  Set up the queue.
 	priv_cmdQueue = g_async_queue_new ();

@@ -170,13 +170,13 @@
 #define _STR_TO_B10_TYPE(logLevel, string, type, capMin, capMax) \
 ({ \
 	int64_t decode = strtoll ((char*)string, NULL, 10); \
-	_CAP_RANGE (logLevel, "%ld", decode, (int64_t)capMin, (int64_t)capMax); \
+	_CAP_RANGE (logLevel, "%jd", decode, (int64_t)capMin, (int64_t)capMax); \
 	(type)decode; \
 })
 #define _STR_TO_U64(logLevel, string, capMin, capMax) \
 ({ \
 	uint64_t decode = strtoull ((char*)string, NULL, 10); \
-	_CAP_RANGE (logLevel, "%ld", decode, (uint64_t)capMin, (uint64_t)capMax); \
+	_CAP_RANGE (logLevel, "%ju", decode, (uint64_t)capMin, (uint64_t)capMax); \
 	decode; \
 })
 #define _STR_TO_FLOAT_TYPE(logLevel, string, type, capMin, capMax) \

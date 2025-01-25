@@ -99,8 +99,10 @@ label#label-bolderline
 	font-weight:  600;
 	text-decoration:  underline;
 }
-box > label
+grid > box > label,
+grid > grid > label
 {
+	/*  Not sure why this is happening, but it doesn't happen if the '*' font size is specified in px.  */
 	font-size:  1.0em;
 }
 

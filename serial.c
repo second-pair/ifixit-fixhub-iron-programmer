@@ -59,8 +59,11 @@
 #define CMD_CAL_TEMP_SET "settings set tempcorrection"
 #define CMD_CAL_TEMP_SET_LEN 27
 //  Getter functions.
-#define CMD_VERSION_GET "version\n"
-#define CMD_VERSION_GET_LEN 8
+#define CMD_VERSION_GET "otp read\n"
+#define CMD_VERSION_GET_LEN 9
+#define CMD_SN_MCU_GET "mcu_sn\n"
+#define CMD_SN_MCU_GET_LEN 7
+#define CMD_SN_MCU_RESP_LEN 26
 #define CMD_HEATER_DETAILS_GET "heater details\n"
 #define CMD_HEATER_DETAILS_GET_LEN 15
 #define CMD_ACCELEROMETER_GET "mxc4005 magnitude\n"
@@ -130,6 +133,7 @@ static inline void skipToParamAndExtract_str (uint8_t** start, uint16_t lineSkip
 
 //  Getter functions.
 static inline void priv_version_get (void);
+static inline void priv_snMcu_get (void);
 static inline void priv_heaterDetails_get (void);
 static inline void priv_accelerometer_get (void);
 static inline void priv_spTemp_get (void);
@@ -411,6 +415,9 @@ static inline void priv_serCmd_despatch (ironCommand* ironCmd)
 		case ironCmdType_version_get:
 			priv_version_get ();
 			break;
+		case ironCmdType_snMcu_get:
+			priv_snMcu_get ();
+			break;
 		case ironCmdType_heaterDetails_get:
 			priv_heaterDetails_get ();
 			break;
@@ -496,6 +503,9 @@ static void priv_serRoutine_next (void)
 	{
 		case ironCmdType_version_get:
 			priv_version_get ();
+			break;
+		case ironCmdType_snMcu_get:
+			priv_snMcu_get ();
 			break;
 		case ironCmdType_heaterDetails_get:
 			priv_heaterDetails_get ();
@@ -656,9 +666,50 @@ static inline void priv_version_get (void)
 		_LOG (1, "No data received!  Returning...\n");
 		return;
 	}
-	//  Parse the information.
 	_LOG (5, "Version:\n%s\n", start);
-	//gui_version_update ();
+
+	/*  Parse the information.
+	00:  |version: 1|
+	01:  |serial_number: 3003825|
+	*/
+
+	//  Version
+	uint8_t version = skipToParamAndExtract_int
+		(start, 0, 9, amount, uint8_t, 0, UINT8_MAX);
+	//  Serial Number
+	uint32_t snDevice = skipToParamAndExtract_int
+		(start, 1, 15, amount, uint32_t, 0, UINT32_MAX);
+
+	gui_version_update (version);
+	gui_snDevice_update (snDevice);
+}
+
+static inline void priv_snMcu_get (void)
+{
+	//  Get the information.
+	uint8_t buffRead [SERIAL_BUFF_SIZE];
+	uint8_t* start;
+	int amount = priv_read_oneliner (buffRead, CMD_SN_MCU_GET, CMD_SN_MCU_GET_LEN, &start);
+	if (amount < 0)
+	{
+		_LOG (1, "No data received!  Returning...\n");
+		return;
+	}
+	_LOG (5, "MCU Serial Number:\n%s\n", start);
+
+	/*  Parse the information.
+	mcu_sn -> 12-Byte Hex serial number formatted '00112233-44556677-8899AABB'.  The first two fields are the USB Hardware ID, which is 8-bytes long.
+	*/
+
+	//  MCU Serial Number
+	if (start [8] != '-' || start [17] != '-')
+		return;
+	start [CMD_SN_MCU_RESP_LEN] = '\0';
+	char* snMcu = malloc (CMD_SN_MCU_RESP_LEN+1 * sizeof (char));
+	memcpy (snMcu, start, CMD_SN_MCU_RESP_LEN+1 * sizeof (char));
+	if (snMcu == NULL)
+		return;
+	gui_snMcu_update (snMcu);
 }
 
 static inline void priv_heaterDetails_get (void)

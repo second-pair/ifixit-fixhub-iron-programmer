@@ -40,7 +40,7 @@
 typedef enum ironCommandType
 {
 	//  Getters
-	ironCmdType_version_get, ironCmdType_heaterDetails_get, ironCmdType_accelerometer_get,
+	ironCmdType_version_get, ironCmdType_snMcu_get, ironCmdType_heaterDetails_get, ironCmdType_accelerometer_get,
 	ironCmdType_spTemp_get, ironCmdType_maxTemp_get,
 	ironCmdType_uptime_get,
 	ironCmdType_idleEnable_get, ironCmdType_idleTimer_get, ironCmdType_idleTemp_get,

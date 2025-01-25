@@ -55,8 +55,8 @@ static GtkWidget* label_accelZ = NULL;
 static GtkWidget* label_accelMag = NULL;
 static GtkWidget* label_faults = NULL;
 static GtkWidget* label_version = NULL;
-static GtkWidget* label_sn_device = NULL;
-static GtkWidget* label_sn_mcu = NULL;
+static GtkWidget* label_snDevice = NULL;
+static GtkWidget* label_snMcu = NULL;
 //  Configuration
 static GtkWidget* sw_idleEnable_new = NULL;
 static GtkWidget* text_idleTimer_new = NULL;
@@ -106,6 +106,9 @@ static gboolean cb_spTemp_update_to (gpointer data);  //  C or F
 static gboolean cb_maxTemp_update_to (gpointer data);  //  C or F
 static gboolean cb_uptime_update_to (gpointer data);  //  mS -> float S
 static gboolean cb_accelerometer_update_to (gpointer data);  //  Raw -> m/s^2?
+static gboolean cb_version_update_to (gpointer data);
+static gboolean cb_snDevice_update_to (gpointer data);
+static gboolean cb_snMcu_update_to (gpointer data);
 static gboolean cb_idleEnable_update_to (gpointer data);
 static gboolean cb_idleTimer_update_to (gpointer data);  //  S
 static gboolean cb_idleTemp_update_to (gpointer data);  //  C or F
@@ -305,8 +308,8 @@ static GtkWidget* priv_aux_create (void)
 	//  Accelerometer
 	GtkWidget* box_accel = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_box_set_homogeneous (GTK_BOX (box_accel), 1);
-	gtk_box_append (GTK_BOX (box_accel), gtk_label_new (TEXT_AUX_ACCELEROMETER));
 	gtk_grid_attach (GTK_GRID (grid_aux), box_accel, 0, 2, 3, 1);
+	gtk_box_append (GTK_BOX (box_accel), gtk_label_new (TEXT_AUX_ACCELEROMETER));
 	label_accelX = gtk_label_new ("<accelX>");
 	gtk_box_append (GTK_BOX (box_accel), label_accelX);
 	label_accelY = gtk_label_new ("<accelY>");
@@ -317,12 +320,18 @@ static GtkWidget* priv_aux_create (void)
 	gtk_box_append (GTK_BOX (box_accel), label_accelMag);
 
 	//  Device Information
+	GtkWidget* grid_versions = gtk_grid_new ();
+	gtk_grid_set_column_homogeneous (GTK_GRID (grid_versions), 1);
+	gtk_grid_attach (GTK_GRID (grid_aux), grid_versions, 0, 3, 3, 1);
+	gtk_grid_attach (GTK_GRID (grid_versions), gtk_label_new (TEXT_AUX_VERSION), 0, 0, 1, 1);
 	label_version = gtk_label_new ("<version>");
-	gtk_grid_attach (GTK_GRID (grid_aux), label_version, 0, 3, 1, 1);
-	label_sn_device = gtk_label_new ("<ser-number>");
-	gtk_grid_attach (GTK_GRID (grid_aux), label_sn_device, 1, 3, 1, 1);
-	label_sn_mcu = gtk_label_new ("<MCU-S/N>");
-	gtk_grid_attach (GTK_GRID (grid_aux), label_sn_mcu, 2, 3, 1, 1);
+	gtk_grid_attach (GTK_GRID (grid_versions), label_version, 1, 0, 1, 1);
+	gtk_grid_attach (GTK_GRID (grid_versions), gtk_label_new (TEXT_AUX_SN_DEV), 2, 0, 1, 1);
+	label_snDevice = gtk_label_new ("<ser-number>");
+	gtk_grid_attach (GTK_GRID (grid_versions), label_snDevice, 3, 0, 1, 1);
+	gtk_grid_attach (GTK_GRID (grid_versions), gtk_label_new (TEXT_AUX_SN_MCU), 4, 0, 1, 1);
+	label_snMcu = gtk_label_new ("<MCU-S/N>");
+	gtk_grid_attach (GTK_GRID (grid_versions), label_snMcu, 5, 0, 2, 1);
 
 	return grid_aux;
 }
@@ -462,6 +471,15 @@ void gui_accelerometer_update (AccelRaw aRaw)
 	uint64_t aEncode;
 	memcpy (&aEncode, &aRaw, sizeof (aEncode));
 	g_idle_add_full (G_PRIORITY_LOW, cb_accelerometer_update_to, (gpointer)aEncode, NULL);
+}
+void gui_version_update (uint8_t newValue)
+	{  gui_update_int (cb_version_update_to, newValue, "Version");  }
+void gui_snDevice_update (uint32_t newValue)
+	{  gui_update_int (cb_snDevice_update_to, newValue, "Device Serial #");  }
+void gui_snMcu_update (char* snMcu)
+{
+	_LOG (4, "MCU Serial #:  %s\n", snMcu);
+	g_idle_add_full (G_PRIORITY_LOW, cb_snMcu_update_to, (gpointer)snMcu, NULL);
 }
 void gui_idleTimer_update (uint16_t newValue)
 	{  gui_update_int (cb_idleTimer_update_to, newValue, "Idle Timer");  }
@@ -789,6 +807,19 @@ static gboolean cb_accelerometer_update_to (gpointer data)
 	label_update_float_accel (label_accelY, accelY, float);
 	label_update_float_accel (label_accelZ, accelZ, float);
 	label_update_float_accel (label_accelMag, accelM, float);
+	return 0;
+}
+static gboolean cb_version_update_to (gpointer data)
+	{  label_update_int (label_version, data, uint8_t);  }
+static gboolean cb_snDevice_update_to (gpointer data)
+	{  label_update_int (label_snDevice, data, uint32_t);  }
+static gboolean cb_snMcu_update_to (gpointer data)
+{
+	char* updateText = (char*)data;
+	if (updateText == NULL)
+		return 0;
+	gtk_label_set_text (GTK_LABEL (label_snMcu), updateText);
+	free (updateText);
 	return 0;
 }
 static gboolean cb_idleEnable_update_to (gpointer eND)

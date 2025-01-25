@@ -58,8 +58,10 @@
 //  Secondary Readouts
 #define TEXT_AUX_TITLE "Secondary Readouts"
 #define TEXT_AUX_UPTIME "Uptime"
-#define TEXT_AUX_ACCELEROMETER "Acceleration"
+#define TEXT_AUX_ACCELEROMETER "Acceleration X Y Z Mag"
 #define TEXT_AUX_VERSION "Version"
+#define TEXT_AUX_SN_DEV "Device Serial #"
+#define TEXT_AUX_SN_MCU "MCU Serial #"
 //  Configuration
 #define TEXT_CONFIG_TITLE "Configuration"
 #define TEXT_CONFIG_IDLE "Idle"

@@ -76,9 +76,9 @@ void gui_spTemp_update (uint16_t newValue);
 void gui_maxTemp_update (uint16_t newValue);
 void gui_uptime_update (uint64_t newValue);
 void gui_accelerometer_update (AccelRaw aRaw);
-//prolly accel_x
-//prolly accel_y
-//prolly accel_z
+void gui_version_update (uint8_t newValue);
+void gui_snDevice_update (uint32_t newValue);
+void gui_snMcu_update (char* snMcu);  //  Heap-allocated, will be `free ()`d.
 void gui_idleEnable_update (uint16_t newValue);
 void gui_idleTimer_update (uint16_t newValue);
 void gui_idleTemp_update (uint16_t newValue);

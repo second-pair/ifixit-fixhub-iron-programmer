@@ -3,6 +3,11 @@ Standalone, offline programmer for the iFixIt FixHub Soldering Iron.
 
 This programmer provides a live-view of your soldering iron and allows you to make configuration changes to it; similar to the official WebSerial interface.   The programmer can be used compoletely offline and without any browser installed.
 
+###  Demo Video
+
+[ifixit-fixhub-iron-programmer-demo.webm](https://github.com/user-attachments/assets/973ad0f0-ef73-4b10-bce6-9c1f30e6e8a3)
+
+
 ##  Installing
 
 On Linux systems, you'll need to install the gtk4 (runtime) library.  In theory, everything else should be built into the binary, but please drop me an issue if this needs an update.
